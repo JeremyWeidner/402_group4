@@ -152,9 +152,9 @@ x.sd <- sd(x)
 x.var <- var(x)
 
 #academicenvp summary stats
-y.mean <- mean(academicenvp)
-y.sd <- sd(academicenvp)
-y.var <- var(academicenvp)
+y.mean <- mean(y)
+y.sd <- sd(y)
+y.var <- var(y)
 
 a <- rbind(c(x.mean, x.sd, x.var),
       c(y.mean, y.sd, y.var))
