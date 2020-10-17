@@ -42,7 +42,14 @@ With the new subset of data, the least square regression line appears closer to 
 
 ### d)	Now create two linear models for the prediction of UCLA students’ perception of academics from the friendliness by using: 1) The original campus climate data, and 2) the subset you created. Compare the two models in terms of the slope and R-squared and comment on any changes that happened. 
 ```{r}
-199311
+ 
+lm.original <- lm(academicenvp ~ friendlyenvp, data=campusclimate)
+ 
+summary(lm.original)
+ 
+lm.new <- lm(academicenvp ~ friendlyenvp, data=newdata)
+ 
+summary(lm.new)
 ```
 
 The slope is statistically significant in both models: 0.58 in the original dataset and slightly sleeper at 0.61 for the subset. The intercept also changes from 15.42 to 13.33 so both B_0 and B_1 are different in these linear models. However, the R^2 values show little difference in the approaches: although the R^2 is higher for the subset data, 26.44% is not much higher than 26.05%
