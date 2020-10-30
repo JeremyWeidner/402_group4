@@ -1,0 +1,332 @@
+---
+title: "Stats 402 ~ Homework 2"
+author: "Group 4 ~ Britney Brown, Harrison DiStefano, Jaehui(Jaehee) Jeong, Lisa Kaunitz, Tianyang Liu, Yuandong (David) Sun, Jeremy Weidner"
+date: "11/02/2020"
+output: pdf_document
+---
+
+# Problem One
+Maria is taking statistics and she is confused about the concept of mean square between and mean square within. She goes to the TA and asks for clarification. This is how the TA answers.
+
+•	First I am going to clarify these concepts by giving you an example of an observational study.
+
+•	In a company they want to compare the attitudes of technical and the administrative staff toward a new health plan. They give a survey of ten questions to 50 engineers and 50 administrative employees. They calculate the mean and standard deviation of each group.
+
+•	From a conceptual point of view within part reflects the differences between the attitudes of engineers and administrators toward the new health plan. While, the between part reflects the differences that exist among the 50 engineers and the 50 administrators toward the new health plan.
+
+•	From a mathematical point of view you need to subtract the mean of the two groups and divide by the square root of the variances of the two groups. This will give you the F-value and then you estimate the p-value using R.
+
+
+
+**Question to be answered**
+If you were looking for a TA would you hire this person, Yes or no, and why? See lecture two with the part on categorical predictors with two levels. Back up your reasoning with…
+
+No, do not hire the dummy. Very misleading, fire right away. 
+
+### a)	Drawing the right schematic.
+
+draw graph thingy
+
+### b)	Showing the relevant formulas.
+
+SST = SSBetween + SSwithin 
+
+correct formulas from google search/textbook (jeremy)
+
+### c)	Connecting your conceptual explanation to the formulas you used.
+
+
+SWITCH IT AROUND
+From a conceptual point of view within part reflects the differences between the attitudes of engineers and administrators toward the new health plan. While, the between part reflects the differences that exist among the 50 engineers and the 50 administrators toward the new health plan.
+
+
+#Problem Two
+Using Houston real estate data posted in the homework folder on week three, answer the following questions.
+```{r}
+houstonrealesate <- read.csv("houstonrealesate.csv")
+head(houstonrealesate) #view data
+```
+
+### a)	Draw the histogram of home prices (Y)
+```{r}
+hist(houstonrealesate$Yi)
+
+library(ggplot2)
+ggplot(mapping = aes(x=houstonrealesate$Yi)) + geom_histogram() +
+  xlab("Home Prices") + ggtitle("Histogram: Y outcome variable (no transformation)")
+```
+
+We notice that the outcome variable, home prices, is right skewed. 
+
+### b)	Conduct transformation using the package in library “car” – see lecture two – and decide which transformation if any help to solve the problem.
+```{r}
+library(car)
+symbox(~Yi,data=houstonrealesate)
+```
+
+The above plot suggests that the log transformation of the Yi variable does the best job at creating a symmetric distribution. 
+
+### c)	Make the transformation that you think is best and draw the resulting histogram.
+```{r}
+logYi <- log(houstonrealesate$Yi)
+hist(logYi)
+
+ggplot(mapping = aes(x=logYi)) + geom_histogram() +
+  xlab("Home Prices") + ggtitle("Histogram: Y outcome variable (log transformation)")
+```
+
+### d)	Watch the following videos to learn about “boxcox” transformation and use the following commands to calculate the exact value of lambda needed for making the boxcox transformation. After you made the transformation draw the histogram.
+```{r}
+library(forecast)
+lambda=BoxCox.lambda(houstonrealesate$Yi)
+lambda
+
+boxcoxYi=houstonrealesate$Yi^lambda
+
+hist(boxcoxYi)
+ggplot(mapping = aes(x=boxcoxYi)) + geom_histogram() +
+  xlab("Home Prices") + ggtitle("Histogram: Y outcome variable (boxcox transformation)")
+```
+
+### e)	Which histogram looks best?
+
+The log transformation does a much better job at creating a more symmetric, normally spread distribution.
+
+### f)	Install the library (moments) to calculate the skewness of a histogram. Using this library, calculate the skewness of Yi and the histograms resulting from log and boxcox transformation. Decide which transformation did the best job of improving the skewness.
+```{r}
+library(moments)
+
+#no transformation
+skewness(houstonrealesate$Yi)
+
+#log transformation
+skewness(logYi)
+
+#boxcox transformation
+skewness(boxcoxYi)
+```
+
+The skewness of the log transformation is approximately 1.27, which is close to the 1 for a normally distributed histogram. Compared to the higher skewness values for the original data and the boxcox transformation, this indicates that the log transformation does the best job at improving the skewness. 
+
+### g)	Use the Shapiro test to test for the normality of Yi , logYi, and Yi resulting from boxcox transformation. The null hypothesis is that the histogram of interest is normal vs. the alternative hypothesis that it is not. Use the following command.
+```{r}
+shapiro.test(houstonrealesate$Yi) #reject the null, histogram is NOT normal
+
+shapiro.test(logYi) #reject the null, histogram is NOT normal
+
+shapiro.test(boxcoxYi) #reject the null, histogram is NOT normal
+```
+
+According to the Shapiro Test, the original data is not normally distributed, which is visually obvious in the first, right-skewed histogram. The Shapiro Test also indicates that the log and boxcox transformation are still not normally distributed, despite their improvement over the non-transformed data. 
+
+### h)	Draw the plot of residuals and qq plot for Y, logYi, and the boxcox transformation of Yi. Compare the plots and decide which transformation did the best job of taking care of the problem and whether any of them solved the problem
+```{r}
+#y no transformation
+m.original <- lm(Yi ~x1i + x2i, data=houstonrealesate)
+par(mfrow=c(2,2))
+plot(m.original)
+
+# log transform
+m.log <- lm(log(Yi) ~x1i + x2i, data=houstonrealesate)
+par(mfrow=c(2,2))
+plot(m.log)
+
+# boxcox transform
+m.boxcox <- lm(Yi^lambda ~x1i + x2i, data=houstonrealesate)
+par(mfrow=c(2,2))
+plot(m.boxcox)
+
+```
+#ADD
+STATEMENT HERE
+does it really improve much? still messy
+did not solve but slightly better
+
+#Problem Three
+Using women powers data and codebook posted in the homework folder on week two:
+
+### a)	Complete the following table
+```{r}
+womenpowers <- read.csv("womenpowers.csv")
+attach(womenpowers)
+summary(womenpowers)
+
+#nonint: non-intact family structure at age 14 (yes or no)
+intact <- womenpowers[nonint == "no",] 
+  mean1 <- mean(intact$income)
+  var1 <- var(intact$income)
+  n1 <- length(intact$income)
+non_intact <- womenpowers[nonint == "yes",]
+  mean2 <- mean(non_intact$income)
+  var2 <- var(non_intact$income)
+  n2 <- length(non_intact$income)
+
+a <- rbind(c(mean1, var1, n1), c(mean2, var2, n2))
+colnames(a) <- c("Mean of Income", "Variance of Income", "Sample Size")
+rownames(a) <- c("Intact Family", "Non-Intact Family")
+a
+
+(income.mean <- mean(income))
+(income.variance <- var(income))
+```
+
+Overall mean for income: 8646.293 
+Overall variance for income: 34929285
+
+### b)	Once you have complete the above table, calculate…
+```{r}
+# s2_w <- ((n1-1)*var1 + (n2-1)*var2)/(n1 + n2 - 2)
+
+# 1) t-value for testing the null hypothesis that average income is similar for intact and non-intact families.
+t_val <- (mean1 - mean2)/sqrt(var1/n1 + var2/n2)
+t_val
+
+#2)	Confidence interval for the two-sample test of the mean. Interpret this interval within context.
+# use two tail 95% CI 
+c((mean1 - mean2) - qnorm(0.975)*sqrt(var1/n1 + var2/n2), (mean1 - mean2) + qnorm(0.975)*sqrt(var1/n1 + var2/n2))
+```
+#Add
+The true difference in the population..... 
+
+
+```{r}
+#3)	Sum of square between.
+SSbetween <- n1*(mean1 - income.mean)^2 + n2*(mean2 - income.mean)^2
+SSbetween
+
+#4)	Sum of square within.
+SSwithin <- sum((intact$income - mean1)^2) + sum((non_intact$income - mean2)^2)
+SSwithin
+
+#5)	F-value for analysis of variance.
+j <- 2
+N <- n1 + n2
+F_val <- (SSbetween/(j-1))/(SSwithin/N-j)
+F_val
+
+#6)	Compute and interpret R-squared within context.
+R2 <- SSbetween / (SSbetween + SSwithin)
+R2
+
+#double check values
+#t.test(income~ nonint) 
+#summary(aov(income ~ nonint, data=womenpowers))
+#summary(lm(income ~ nonint, data=womenpowers))
+
+```
+#Add
+R^2 is low so statistically significant but not practically significant. 
+There is difference but not good to predict 
+
+
+# Problem Four
+Using campus climate data, examine the relationship between students’ perception of academic success and class comfort.
+```{r}
+campusclimate <- read.csv("campusclimate.csv")
+attach(campusclimate)
+```
+
+### a)	Recode Q10-A-5 based on the directions given below.
+```{r}
+# Q10-A-5: I have performed academically as well as I expected I would.
+# We will call this “students’ perception of academic success”
+table(campusclimate$Q10_A_5) #original
+
+#remove level 3, neither, and 6, unknown
+is.na(Q10_A_5) <- Q10_A_5 == 3 | Q10_A_5 == 6
+Q10_A_5 <- factor(Q10_A_5)
+
+library(car)
+academic.performance <- recode(Q10_A_5, "c('1','2') = 'agree'; c('4','5') = 'disagree'")
+table(academic.performance) #recoded
+```
+
+### b)	Recode the classcomfort based on the directions given below 
+```{r}
+table(campusclimate$classcomfort)
+
+#remove NA
+is.na(classcomfort) <- classcomfort == 6
+classcomfort <- factor(classcomfort)
+
+classcomfort <- recode(classcomfort,"'1'='very comfortable';
+                      '2'='comfortable';'3'='meh';
+                      '4'='uncomfortable' ; '5'='uncomfortable'",
+                      levels = c("uncomfortable", "meh", "comfortable","very comfortable"))
+table(classcomfort)
+```
+
+### c)	After recoding, calculate chi-square to examine the relationship between students’ perception of their academic success and their perception of class comfort. Make class comfort row and academic performance column
+```{r}
+chisq.test(x = classcomfort, y= academic.performance)
+```
+
+### d)	Calculate and interpret row percentage.
+```{r}
+table <- table(classcomfort, academic.performance)
+prop.table(table,1)
+
+plot(prop.table(table,1))
+```
+As class comfort increases, satisfaction with academic performance increases as well.
+
+
+### e)	Calculate the odds ratio of students’ perception of academic success in a comfortable class climate compared to an uncomfortable class climate. Interpret the odds ratio you find within context
+```{r}
+addmargins(table)
+
+odds_comfort <- 1283/948
+odds_uncomfort <- 95/222
+
+#the odds ratio of students’ perception of academic success in a comfortable class climate
+total_odds <- odds_comfort/ odds_uncomfort
+```
+
+#Problem Five
+Suppose you were the TA, Given the following information, how would you explain questions “a”, “b”, and “c” to your students? Hint: See page 92 on the chapter on chi-sqaure F-test in ANOVA.
+
+### a) What is the difference between $\alpha_j$ and $\hat\alpha_j$?
+
+$\alpha_j$ is the difference between the mean of population of group j and the mean of the overall population.
+
+$\hat\alpha_j$ is the difference between the mean of a sample estimate of the population of group j and the mean of a sample estimate of the overall population.
+
+Note that the overall population includes the population of group j. 
+
+### b) Given the above, explain why we say that if we fail to reject the null, the expected value of F is one.
+
+If we fail to reject the null this means that there is no statistical difference between $MS_{between}$ and $MS_{within}$ since the amount of variation we are able to explain by comparing the difference between groups is not significantly more than the amount of variation we cannot explain, which is the difference within the groups. If the amount of variation explained is similar for both between and within, the ratio between them will approach 1 as n goes to infinity. 
+
+alpha j close to 0
+
+t.test not significant
+
+another way to visulalize
+
+
+### c) Given the following output, do the findings represent $E_{MS(between)}$ and $E_{MS(within){$? Yes or No? Explain your reasoning.
+
+Yes, because the results show that the null hypothesis is false, we know that a treatment effect between groups does exist. Therefore, the expected $MS_{between}$ is an estimate of the population error variance in addition to a function of the squared treatment effect. On the other hand, if the null were true, then the expected $MS_{between}$ would only be an estimate of the population error variance. For either case, the expected $MS_{within}$ will be the population error variance. 
+
+#Problem Six
+Suppose you were given the following output and plot, how would you explain the findings within context to a **non-statistical audience**. Make sure you include …
+
+Nevermind, i did write something but change it to make sense. 
+
+### a)	The question that we are trying to answer.
+
+Given the two-sample t-test below, we are testing whether the smoking habits of mothers significantly effect the birthweight of their infants? This test divides all mothers in the sample into one of two groups based off of their smoking habits and then compare the birthweights of their infants to see if there is a significant difference. 
+
+### b)	The significance of findings.
+
+The t-test outputs a p-value of 3.53 ^-13 which is very close to 0. The p-value indicates the chance that the birthweights for non-smoking and smoking mothers come from the same population. In other words, if we did not know the smoking habits of the mother, we would not be able to see a difference between the groups. However, since the p-value is very small, we know that the chance of this scenario is very slim, indicating that smoking habits have a significant impact on infant birthweights. 
+
+### c) Explanation of error bars.
+
+The error bars are 95% confidence intervals around the mean of each group. Since this test is based off of a sample, and not the population of every single mother, smoking or non-smoking, we use confidence intervals to estimate what the true mean birthweight is for infants in their respective groups. 
+
+
+
+
+
+
