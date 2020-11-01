@@ -315,13 +315,24 @@ Nevermind, i did write something but change it to make sense.
 
 ### a)	The question that we are trying to answer.
 
+trying a non-stats answer here -JW :
+Given the following output it appears that we are using a dataset to determine whether there is a relationship between the birthweight of a child and the smoking habits of the mother. Specifically we are dividing the mothers into two groups (smoking and non-smoking) to observe and compare the difference in the birthweight across groups.
+
+
 Given the two-sample t-test below, we are testing whether the smoking habits of mothers significantly effect the birthweight of their infants? This test divides all mothers in the sample into one of two groups based off of their smoking habits and then compare the birthweights of their infants to see if there is a significant difference. 
 
 ### b)	The significance of findings.
 
+non-stats answer attempt:
+Based on the results of the test that has been run we think it is extremely unlikely that the average birthweight of the two groups is the same. Specifically we have enough evidence to say that there most likely is a difference in birthweight of children born to mothers with a history of smoking vs. those without.
+
+
 The t-test outputs a p-value of 3.53 ^-13 which is very close to 0. The p-value indicates the chance that the birthweights for non-smoking and smoking mothers come from the same population. In other words, if we did not know the smoking habits of the mother, we would not be able to see a difference between the groups. However, since the p-value is very small, we know that the chance of this scenario is very slim, indicating that smoking habits have a significant impact on infant birthweights. 
 
 ### c) Explanation of error bars.
+
+non-stats answer attempt:
+The graph has a point for the mean of the two groups in the sample we have collected. The error bar is a statistical attempt at showing the possible range for the mean if we observed the entire population instead of just taking this sample of around 1,000 observations. Based on the bars shown on the graph we see that there is almost no chance that the actual population means are the same as even at the ends of the error bars they do not overlap. 
 
 The error bars are 95% confidence intervals around the mean of each group. Since this test is based off of a sample, and not the population of every single mother, smoking or non-smoking, we use confidence intervals to estimate what the true mean birthweight is for infants in their respective groups. 
 
