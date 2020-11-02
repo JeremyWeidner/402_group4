@@ -1,0 +1,131 @@
+---
+title: "402 Milestone 2 Project"
+author: "Group 4"
+date: "10/25/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Importing the Data:
+
+```{r}
+library(readr)
+CarPrice <- read_csv("CarPrice_Assignment.csv")
+View(CarPrice)
+dim(CarPrice) # 205  26
+```
+
+# Initial Exploratory Data Analysis: 
+
+```{r}
+# install.packages("DataExplorer")
+# library(DataExplorer)
+# create_report(CarPrice)
+# plot_str(CarPrice)
+```
+
+## Data Wrangling/ Cleaning:
+
+```{r}
+library(dplyr)
+library(stringr)
+unique(CarPrice$CarName)
+
+# Alfa-Romero
+CarPrice <- CarPrice %>% 
+  mutate(CarName = replace(CarName, 
+                           CarName == "alfa-romero giulia" |
+                             CarName == "alfa-romero stelvio" |
+                             CarName == "alfa-romero Quadrifoglio", "alfa-romero"))
+
+# audi
+CarPrice <- CarPrice %>% 
+  mutate(CarName = replace(CarName, 
+                           CarName == "audi 100 ls" |
+                             CarName == "audi 100ls" |
+                             CarName == "audi fox" |
+                             CarName == "audi 5000" |
+                             CarName ==  "audi 4000" |
+                             CarName == "audi 5000s (diesel)", "audi"))
+# after a bit of reserach I found an easier way to do it.... 
+# bmw
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "bmw", "bmw", CarPrice$CarName )
+
+# cherolet
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "chevrolet", "chevrolet", CarPrice$CarName )
+
+# dodge
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "dodge", "dodge", CarPrice$CarName )
+
+# honda
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "honda", "honda", CarPrice$CarName )
+
+# isuzu 
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "isuzu", "isuzu", CarPrice$CarName )
+
+# jaguar
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "jaguar", "jaguar", CarPrice$CarName )
+
+# mazda: some are named maxda
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "maxda", "mazda", CarPrice$CarName )
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "mazda", "mazda", CarPrice$CarName )
+
+# buick
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "buick", "buick", CarPrice$CarName )
+
+# mercury
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "mercury", "mercury", CarPrice$CarName )
+
+# mitsubishi
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "mitsubishi", "mitsubishi", CarPrice$CarName )
+
+# nissan 
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "nissan", "nissan", CarPrice$CarName )
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "Nissan", "nissan", CarPrice$CarName )
+
+# peugeot
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "peugeot", "peugeot", CarPrice$CarName )
+
+# plymouth
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "plymouth", "plymouth", CarPrice$CarName )
+
+# porsche
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "porsche", "porsche", CarPrice$CarName )
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "porcshce", "porsche", CarPrice$CarName )
+
+# renault
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "renault", "renault", CarPrice$CarName )
+
+# saab
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "saab", "saab", CarPrice$CarName )
+
+# subaru
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "subaru", "subaru", CarPrice$CarName )
+
+# toyota
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "toyota", "toyota", CarPrice$CarName )
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "toyouta", "toyota", CarPrice$CarName )
+
+# vokswagen
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "volkswagen", "volkswagen", CarPrice$CarName )
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "vokswagen", "volkswagen", CarPrice$CarName )
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "vw", "volkswagen", CarPrice$CarName )
+
+# volvo
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "volvo", "volvo", CarPrice$CarName )
+
+unique(CarPrice$CarName) # all cleaned up, only the the Make of the car - no longer Make and Model. 
+```
+
+
+
+
+
+
+
+
+
+
