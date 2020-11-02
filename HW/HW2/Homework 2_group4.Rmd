@@ -206,7 +206,7 @@ SSwithin
 #5)	F-value for analysis of variance.
 j <- 2
 N <- n1 + n2
-F_val <- (SSbetween/(j-1))/(SSwithin/N-j)
+F_val <- (SSbetween/(j-1))/(SSwithin/(N-j))
 F_val
 
 #6)	Compute and interpret R-squared within context.
