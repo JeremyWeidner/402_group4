@@ -280,7 +280,9 @@ odds_uncomfort <- 95/222
 
 #the odds ratio of students’ perception of academic success in a comfortable class climate
 total_odds <- odds_comfort/ odds_uncomfort
+total_odds
 ```
+From the odds ratio above we can see that the the perception of academic success is 3.16 times higher for students who say they are comfortable, rather than students who feel uncomforatble in the class climate. In other words, students who feel comfortable will have a perception of academic success that is about three times higher than students who do not feel comfortable. 
 
 #Problem Five
 Suppose you were the TA, Given the following information, how would you explain questions “a”, “b”, and “c” to your students? Hint: See page 92 on the chapter on chi-sqaure F-test in ANOVA.
