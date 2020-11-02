@@ -82,6 +82,7 @@ ggplot(mapping = aes(x=logYi)) + geom_histogram() +
 
 ### d)	Watch the following videos to learn about “boxcox” transformation and use the following commands to calculate the exact value of lambda needed for making the boxcox transformation. After you made the transformation draw the histogram.
 ```{r}
+
 library(forecast)
 lambda=BoxCox.lambda(houstonrealesate$Yi)
 lambda
@@ -111,7 +112,7 @@ skewness(logYi)
 skewness(boxcoxYi)
 ```
 
-The skewness of the log transformation is approximately 1.27, which is close to the 1 for a normally distributed histogram. Compared to the higher skewness values for the original data and the boxcox transformation, this indicates that the log transformation does the best job at improving the skewness. 
+The skewness of the log transformation is approximately 1.27, which is close to the 1 for a normally distributed histogram. Compared to the higher skewness values for the original data (3.377) and the boxcox transformation (1.608676). This indicates that the log transformation does the best job at improving the skewness. 
 
 ### g)	Use the Shapiro test to test for the normality of Yi , logYi, and Yi resulting from boxcox transformation. The null hypothesis is that the histogram of interest is normal vs. the alternative hypothesis that it is not. Use the following command.
 ```{r}
