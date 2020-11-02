@@ -21,7 +21,7 @@ Maria is taking statistics and she is confused about the concept of mean square 
 **Question to be answered**
 If you were looking for a TA would you hire this person, Yes or no, and why? See lecture two with the part on categorical predictors with two levels. Back up your reasoning with…
 
-No, do not hire the dummy. Very misleading, fire right away. 
+No, do not hire the TA. 
 
 ### a)	Drawing the right schematic.
 
@@ -35,9 +35,14 @@ correct formulas from google search/textbook (jeremy)
 
 ### c)	Connecting your conceptual explanation to the formulas you used.
 
-
 SWITCH IT AROUND
-From a conceptual point of view within part reflects the differences between the attitudes of engineers and administrators toward the new health plan. While, the between part reflects the differences that exist among the 50 engineers and the 50 administrators toward the new health plan.
+
+(David)
+
+From a conceptual point of view, within part (SSW) reflects the difference within the individuals in each group comparing to its group mean. In this example, we use each individual attitude response to subtract the mean of that group, and then take sum of square for the result. We then do it for both engineer and administrator groups. Lastly, we take the sum of the results of these two groups. We **cannot** explain on this part. 
+
+
+While, the between part (SSB) reflects the differences between the attitudes of engineers and administrators toward the new health plan. In this example, we use the mean of each group to subtract the mean of all groups and square the result, then multiply by the number of sample of each group(n=50), lastly take the sum of each group's result. This part we **can** explain.             
 
 
 #Problem Two
