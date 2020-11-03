@@ -125,6 +125,46 @@ unique(CarPrice$CarName) # all cleaned up, only the the Make of the car - no lon
 
 
 
+# shrink levels to low, medium high
+```{r}
+df1<- CarPrice
+df1<- df1 %>% 
+  mutate(allcars = factor(CarName)) %>% 
+  group_by(allcars) %>%    
+  summarise(counts= n()) %>% #count number of car make
+  arrange(desc(counts)) %>%   # sort by counts 
+  mutate(allcars = factor(allcars, allcars))
+
+df2<- CarPrice
+df2<- df2 %>% 
+  mutate(allcars = factor(CarName)) %>% 
+  group_by(allcars) %>%    
+  summarise(mean_prices= mean(price,na.rm=T)) %>% 
+  arrange(-mean_prices) %>%   # sort by counts 
+  mutate(allcars = factor(allcars, allcars))
+
+high <- df2$allcars[df2$mean_prices > 20000]
+low <- df2$allcars[df2$mean_prices < 12000]
+
+
+for(i in 1:length(CarPrice$CarName)){
+if(CarPrice$CarName[i] %in% high){
+  CarPrice$ChaChing[i] <- "high"
+} else{
+  if(CarPrice$CarName[i] %in% low){
+    CarPrice$ChaChing[i] <- "low"
+  } else{
+    CarPrice$ChaChing[i] <- "medium"
+  }
+}
+}
+
+CarPrice$ChaChing  <- factor(CarPrice$ChaChing ,
+    levels = c('low','medium', 'high'),ordered = TRUE)
+```
+
+
+
 
 
 
