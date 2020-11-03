@@ -92,6 +92,13 @@ boxcoxYi=houstonrealesate$Yi^lambda
 hist(boxcoxYi)
 ggplot(mapping = aes(x=boxcoxYi)) + geom_histogram() +
   xlab("Home Prices") + ggtitle("Histogram: Y outcome variable (boxcox transformation)")
+
+
+library(MASS)
+md = lm(Yi ~x1i + x2i, data=houstonrealesate)
+bc = boxcox(md, lambda=seq(-3,3))
+best.bc = bc$x[which(bc$y==max(bc$y))]
+best.bc
 ```
 
 ### e)	Which histogram looks best?
