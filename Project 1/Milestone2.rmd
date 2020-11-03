@@ -15,7 +15,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(readr)
 CarPrice <- read_csv("CarPrice_Assignment.csv")
 View(CarPrice)
-dim(CarPrice) # 205  26
+dim(CarPrice) # 205  26 
 ```
 
 # Initial Exploratory Data Analysis: 
