@@ -187,11 +187,15 @@ CarPrice$cylindernumber  <- factor(CarPrice$cylindernumber ,
 
 ```{r}
 library(ggplot2)
+library(e1071)
 # hist(CarPrice$price)
 ggplot(aes(x=price), data = CarPrice) + 
   geom_histogram(aes(y = ..density..), color = "grey30", fill = "white") +
   geom_density(alpha = 0.2, fill = "antiquewhite3") + 
   labs(title = "Histogram of Price without Transformation") # This is heavily right skewed...
+  
+ # Checking skewness:
+skewness(CarPrice$price) # 1.751748 (to the right)
 
 ```
 
@@ -203,6 +207,8 @@ symbox(~price, data = CarPrice)
 ggplot(aes(x=price^(-0.5)), data = CarPrice) + 
   geom_histogram(aes(y = ..density..), color = "grey30", fill = "white") +
   geom_density(alpha = 0.2, fill = "antiquewhite3") + labs(title = "Histogram of Price with -0.5 Transformation", x= "price")
+# Checking Skewness: 
+skewness(CarPrice$price^(-0.5)) # -0.2015099 (to the left)
 
 # Box Cox transformation
 library(forecast)
@@ -212,6 +218,10 @@ boxcoxprice <- CarPrice$price^lambda
 ggplot(aes(x = boxcoxprice), data = CarPrice) +
   geom_histogram(aes(y = ..density..), color = "grey30", fill = "white") +
   geom_density(alpha = 0.2, fill = "antiquewhite3") + labs(title = "Histogram of Price with lambda Transformation", x= "price")
+# Checking skewness: 
+skewness(CarPrice$price^lambda) # 0.2059521 (to the right)
+
+# So it looks like the -0.5 transformation is best. 
 
 ```
 
