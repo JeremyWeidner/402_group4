@@ -120,11 +120,6 @@ CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "volvo", "volvo", CarPrice
 unique(CarPrice$CarName) # all cleaned up, only the the Make of the car - no longer Make and Model. 
 ```
 
-
-
-
-
-
 # shrink levels to low, medium high
 ```{r}
 df1<- CarPrice
@@ -186,7 +181,39 @@ CarPrice$cylindernumber  <- factor(CarPrice$cylindernumber ,
     levels = c('<four','four', 'five/six', 'eight+'), ordered = TRUE)
 ```
 
+# Transformations: 
 
+## Price
+
+```{r}
+library(ggplot2)
+# hist(CarPrice$price)
+ggplot(aes(x=price), data = CarPrice) + 
+  geom_histogram(aes(y = ..density..), color = "grey30", fill = "white") +
+  geom_density(alpha = 0.2, fill = "antiquewhite3") + 
+  labs(title = "Histogram of Price without Transformation") # This is heavily right skewed...
+
+```
+
+
+```{r}
+library(car)
+symbox(~price, data = CarPrice)
+# -0.5 looks like it would be the best transformation. 
+ggplot(aes(x=price^(-0.5)), data = CarPrice) + 
+  geom_histogram(aes(y = ..density..), color = "grey30", fill = "white") +
+  geom_density(alpha = 0.2, fill = "antiquewhite3") + labs(title = "Histogram of Price with -0.5 Transformation", x= "price")
+
+# Box Cox transformation
+library(forecast)
+lambda <- BoxCox.lambda(CarPrice$price)
+lambda # -0.9999242 is the recommended lambda for transformation
+boxcoxprice <- CarPrice$price^lambda
+ggplot(aes(x = boxcoxprice), data = CarPrice) +
+  geom_histogram(aes(y = ..density..), color = "grey30", fill = "white") +
+  geom_density(alpha = 0.2, fill = "antiquewhite3") + labs(title = "Histogram of Price with lambda Transformation", x= "price")
+
+```
 
 
 
