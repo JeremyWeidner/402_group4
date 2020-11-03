@@ -164,6 +164,28 @@ CarPrice$ChaChing  <- factor(CarPrice$ChaChing ,
 ```
 
 
+# Transform cylinder variable as well
+```{r}
+for(i in 1:length(CarPrice$cylindernumber)){
+if(CarPrice$cylindernumber[i] %in% c("eight","twelve")){
+  CarPrice$cylindernumber[i] <- "eight+"
+} else{
+  if(CarPrice$cylindernumber[i] %in% c("five","six")){
+    CarPrice$cylindernumber[i] <- "five/six"
+  } else{
+  if(CarPrice$cylindernumber[i] %in% c("two","three")){
+    CarPrice$cylindernumber[i] <- "<four"
+  } else{
+    CarPrice$cylindernumber[i] <- "four"
+}
+  }
+}
+}
+
+CarPrice$cylindernumber  <- factor(CarPrice$cylindernumber ,
+    levels = c('<four','four', 'five/six', 'eight+'), ordered = TRUE)
+```
+
 
 
 
