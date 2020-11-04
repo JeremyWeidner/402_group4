@@ -303,7 +303,7 @@ vif(m4) # yikes...
 1/(1-0.8959) # vif: 9.606148 (less yikes)
 
 ```
-## Interaction between Car Volume x Car Type
+## Interaction between ChaChing:car_volume, and car_volume:carbody 
 
 ```{r}
 m5 <- lm(price^(-0.5) ~ ChaChing*car_volume + carbody + curbweight + enginelocation + peakrpm + average_mpg, data = CarPrice_Added)
@@ -311,6 +311,10 @@ summary(m5) # R-squared: 0.9001
 plot(m5)
 vif(m5)
 1/(1-0.9001) # vif: 10.01001
+
+m6 <- lm(price^(-0.5) ~ car_volume*carbody + ChaChing + curbweight + enginelocation + peakrpm + average_mpg, data = CarPrice_Added)
+summary(m6) # We do not see any stat. significant interactions between `car_volume` and `carbody`. 
+plot(m6)
 ```
 
 
