@@ -217,14 +217,20 @@ lambda # -0.9999242 is the recommended lambda for transformation
 boxcoxprice <- CarPrice$price^lambda
 ggplot(aes(x = boxcoxprice), data = CarPrice) +
   geom_histogram(aes(y = ..density..), color = "grey30", fill = "white") +
-  geom_density(alpha = 0.2, fill = "antiquewhite3") + labs(title = "Histogram of Price with lambda Transformation", x= "price")
+  geom_density(alpha = 0.2, fill = "antiquewhite3") + labs(title = "Histogram of Price with BoxCox lambda Transformation", x= "price")
 # Checking skewness: 
 skewness(CarPrice$price^lambda) # 0.2059521 (to the right)
 
 # So it looks like the -0.5 transformation is best. 
 
 ```
+```{r}
+# curb weight
+summary(CarPrice$curbweight)
+ggplot(aes(y = curbweight), data = CarPrice)+geom_boxplot() + labs(title = "Boxplot of Curbweight")
+ggplot(aes(x = curbweight), data = CarPrice)+geom_histogram() + labs(title = "Histogram of Curbweight")
 
+```
 
 
 
