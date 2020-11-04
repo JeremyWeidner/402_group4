@@ -349,3 +349,32 @@ plot(m6)
 
 
 
+
+# Model for Presentation (FOR NOW)
+```{r}
+#all variables, no transformations on numeric
+model.a <- lm(price ~ ChaChing + carbody + fueltype + enginelocation + cylindernumber + car_volume + curbweight + enginesize + stroke + peakrpm + average_mpg, data=CarPrice_Added)
+summary(model.a) #93.93%
+plot(model.a)
+vif(model.a)
+
+#remove fueltype, stroke, average_mpg
+model.b <- lm(price ~ ChaChing + carbody + enginelocation + cylindernumber + car_volume + curbweight + enginesize +  peakrpm , data=CarPrice_Added)
+summary(model.b) #93.92%
+plot(model.b)
+vif(model.b) #12.12 curbweight and 11.55 for enginesize
+
+# remove curbweight
+model.c <- lm(price ~ ChaChing + carbody + enginelocation + cylindernumber + car_volume + enginesize +  peakrpm , data=CarPrice_Added)
+summary(model.c) #93.36%
+plot(model.c)
+vif(model.c)
+
+# add interaction term
+model.d <- lm(price ~ ChaChing:car_volume + carbody + enginesize + enginelocation + cylindernumber  +  peakrpm , data=CarPrice_Added)
+summary(model.d) #93.59%
+par(mfrow=c(2,2))
+plot(model.d)
+vif(model.d)
+```
+
