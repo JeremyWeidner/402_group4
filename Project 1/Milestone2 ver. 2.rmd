@@ -1,0 +1,274 @@
+---
+title: "402 Milestone 2 Project"
+author: "Group 4"
+date: "10/25/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Importing the Data:
+
+```{r}
+library(readr)
+CarPrice <- read.csv("CarPrice_Assignment.csv")
+View(CarPrice)
+dim(CarPrice) # 205  26 
+```
+
+# Initial Exploratory Data Analysis: 
+
+```{r}
+# install.packages("DataExplorer")
+# library(DataExplorer)
+# create_report(CarPrice)
+# plot_str(CarPrice)
+```
+
+## Data Wrangling/ Cleaning:
+
+```{r}
+library(dplyr)
+library(stringr)
+unique(CarPrice$CarName)
+
+# Alfa-Romero
+CarPrice <- CarPrice %>% 
+  mutate(CarName = replace(CarName, 
+                           CarName == "alfa-romero giulia" |
+                             CarName == "alfa-romero stelvio" |
+                             CarName == "alfa-romero Quadrifoglio", "alfa-romero"))
+
+# audi
+CarPrice <- CarPrice %>% 
+  mutate(CarName = replace(CarName, 
+                           CarName == "audi 100 ls" |
+                             CarName == "audi 100ls" |
+                             CarName == "audi fox" |
+                             CarName == "audi 5000" |
+                             CarName ==  "audi 4000" |
+                             CarName == "audi 5000s (diesel)", "audi"))
+# after a bit of reserach I found an easier way to do it.... 
+# bmw
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "bmw", "bmw", CarPrice$CarName )
+
+# cherolet
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "chevrolet", "chevrolet", CarPrice$CarName )
+
+# dodge
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "dodge", "dodge", CarPrice$CarName )
+
+# honda
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "honda", "honda", CarPrice$CarName )
+
+# isuzu 
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "isuzu", "isuzu", CarPrice$CarName )
+
+# jaguar
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "jaguar", "jaguar", CarPrice$CarName )
+
+# mazda: some are named maxda
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "maxda", "mazda", CarPrice$CarName )
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "mazda", "mazda", CarPrice$CarName )
+
+# buick
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "buick", "buick", CarPrice$CarName )
+
+# mercury
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "mercury", "mercury", CarPrice$CarName )
+
+# mitsubishi
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "mitsubishi", "mitsubishi", CarPrice$CarName )
+
+# nissan 
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "nissan", "nissan", CarPrice$CarName )
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "Nissan", "nissan", CarPrice$CarName )
+
+# peugeot
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "peugeot", "peugeot", CarPrice$CarName )
+
+# plymouth
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "plymouth", "plymouth", CarPrice$CarName )
+
+# porsche
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "porsche", "porsche", CarPrice$CarName )
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "porcshce", "porsche", CarPrice$CarName )
+
+# renault
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "renault", "renault", CarPrice$CarName )
+
+# saab
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "saab", "saab", CarPrice$CarName )
+
+# subaru
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "subaru", "subaru", CarPrice$CarName )
+
+# toyota
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "toyota", "toyota", CarPrice$CarName )
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "toyouta", "toyota", CarPrice$CarName )
+
+# vokswagen
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "volkswagen", "volkswagen", CarPrice$CarName )
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "vokswagen", "volkswagen", CarPrice$CarName )
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "vw", "volkswagen", CarPrice$CarName )
+
+# volvo
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "volvo", "volvo", CarPrice$CarName )
+
+unique(CarPrice$CarName) # all cleaned up, only the the Make of the car - no longer Make and Model. 
+```
+
+# shrink levels to low, medium high
+```{r}
+df1<- CarPrice
+df1<- df1 %>% 
+  mutate(allcars = factor(CarName)) %>% 
+  group_by(allcars) %>%    
+  summarise(counts= n()) %>% #count number of car make
+  arrange(desc(counts)) %>%   # sort by counts 
+  mutate(allcars = factor(allcars, allcars))
+
+df2<- CarPrice
+df2<- df2 %>% 
+  mutate(allcars = factor(CarName)) %>% 
+  group_by(allcars) %>%    
+  summarise(mean_prices= mean(price,na.rm=T)) %>% 
+  arrange(-mean_prices) %>%   # sort by counts 
+  mutate(allcars = factor(allcars, allcars))
+
+high <- df2$allcars[df2$mean_prices > 20000]
+low <- df2$allcars[df2$mean_prices < 12000]
+
+
+for(i in 1:length(CarPrice$CarName)){
+if(CarPrice$CarName[i] %in% high){
+  CarPrice$ChaChing[i] <- "high"
+} else{
+  if(CarPrice$CarName[i] %in% low){
+    CarPrice$ChaChing[i] <- "low"
+  } else{
+    CarPrice$ChaChing[i] <- "medium"
+  }
+}
+}
+
+CarPrice$ChaChing  <- factor(CarPrice$ChaChing ,
+    levels = c('low','medium', 'high'),ordered = TRUE)
+```
+
+
+# Transform cylinder variable as well
+```{r}
+for(i in 1:length(CarPrice$cylindernumber)){
+if(CarPrice$cylindernumber[i] %in% c("eight","twelve")){
+  CarPrice$cylindernumber[i] <- "eight+"
+} else{
+  if(CarPrice$cylindernumber[i] %in% c("five","six")){
+    CarPrice$cylindernumber[i] <- "five/six"
+  } else{
+  if(CarPrice$cylindernumber[i] %in% c("two","three")){
+    CarPrice$cylindernumber[i] <- "<four"
+  } else{
+    CarPrice$cylindernumber[i] <- "four"
+}
+  }
+}
+}
+
+CarPrice$cylindernumber  <- factor(CarPrice$cylindernumber ,
+    levels = c('<four','four', 'five/six', 'eight+'), ordered = TRUE)
+```
+
+# Transformations: 
+
+## Price
+
+```{r}
+library(ggplot2)
+# install.packages("e1071")
+library(e1071)
+# hist(CarPrice$price)
+ggplot(aes(x=price), data = CarPrice) + 
+  geom_histogram(aes(y = ..density..), color = "grey30", fill = "white") +
+  geom_density(alpha = 0.2, fill = "antiquewhite3") + 
+  labs(title = "Histogram of Price without Transformation") # This is heavily right skewed...
+  
+ # Checking skewness:
+skewness(CarPrice$price) # 1.751748 (to the right)
+
+```
+
+
+```{r}
+library(car)
+symbox(~price, data = CarPrice)
+# -0.5 looks like it would be the best transformation. 
+ggplot(aes(x=price^(-0.5)), data = CarPrice) + 
+  geom_histogram(aes(y = ..density..), color = "grey30", fill = "white") +
+  geom_density(alpha = 0.2, fill = "antiquewhite3") + labs(title = "Histogram of Price with -0.5 Transformation", x= "price")
+# Checking Skewness: 
+skewness(CarPrice$price^(-0.5)) # -0.2015099 (to the left)
+
+# Box Cox transformation
+library(forecast)
+lambda <- BoxCox.lambda(CarPrice$price)
+lambda # -0.9999242 is the recommended lambda for transformation
+boxcoxprice <- CarPrice$price^lambda
+ggplot(aes(x = boxcoxprice), data = CarPrice) +
+  geom_histogram(aes(y = ..density..), color = "grey30", fill = "white") +
+  geom_density(alpha = 0.2, fill = "antiquewhite3") + labs(title = "Histogram of Price with BoxCox lambda Transformation", x= "price")
+# Checking skewness: 
+skewness(CarPrice$price^lambda) # 0.2059521 (to the right)
+
+# So it looks like the -0.5 transformation is best. 
+
+```
+```{r}
+# curb weight
+summary(CarPrice$curbweight)
+ggplot(aes(y = curbweight), data = CarPrice)+geom_boxplot() + labs(title = "Boxplot of Curbweight")
+ggplot(aes(x = curbweight), data = CarPrice)+geom_histogram() + labs(title = "Histogram of Curbweight")
+
+```
+
+```{r}
+# Adding car_volume and average_mpg to CarPrice
+CarPrice_Added <- CarPrice
+CarPrice_Added$car_volume <- CarPrice_Added$carheight*CarPrice_Added$carlength*CarPrice_Added$carwidth
+CarPrice_Added$average_mpg <- rowMeans(CarPrice_Added[, c(24, 25)])
+
+# Reorder the data
+CarPrice_Added <- CarPrice_Added[, c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 28, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 29, 27, 26)]
+
+# Analysis on car volume
+summary(CarPrice_Added$car_volume)
+ggplot(aes(y = car_volume), data = CarPrice_Added)+geom_boxplot() + labs(title = "Boxplot of Car Volume")
+ggplot(aes(x = car_volume), data = CarPrice_Added)+geom_histogram() + labs(title = "Histogram of Car Volume")
+
+# Analysis on size of engine
+summary(CarPrice_Added$enginesize)
+ggplot(aes(y = enginesize), data = CarPrice_Added)+geom_boxplot() + labs(title = "Boxplot of Engine Size")
+ggplot(aes(x = enginesize), data = CarPrice_Added)+geom_histogram() + labs(title = "Histogram of Engine Size")
+
+# Analysis on stroke
+summary(CarPrice_Added$stroke)
+ggplot(aes(y = stroke), data = CarPrice_Added)+geom_boxplot() + labs(title = "Boxplot of Stroke")
+ggplot(aes(x = stroke), data = CarPrice_Added)+geom_histogram() + labs(title = "Histogram of Stroke")
+
+# Analysis on Car Peak RPM
+summary(CarPrice_Added$peakrpm)
+ggplot(aes(y = peakrpm), data = CarPrice_Added)+geom_boxplot() + labs(title = "Boxplot of peakrpm")
+ggplot(aes(x = peakrpm), data = CarPrice_Added)+geom_histogram() + labs(title = "Histogram of peakrpm")
+
+# Analysis on average of mpg
+summary(CarPrice_Added$average_mpg)
+ggplot(aes(y = average_mpg), data = CarPrice_Added)+geom_boxplot() + labs(title = "Boxplot of average_mpg")
+ggplot(aes(x = average_mpg), data = CarPrice_Added)+geom_histogram() + labs(title = "Histogram of average_mpg")
+
+```
+
+
+
+
