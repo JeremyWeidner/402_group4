@@ -269,6 +269,39 @@ ggplot(aes(x = average_mpg), data = CarPrice_Added)+geom_histogram() + labs(titl
 
 ```
 
+# Modeling
 
+## full model: 
+```{r}
+m1 <- lm(price ~., data = CarPrice_Added)
+summary(m1) # R^2:  0.9666
+plot(m1) 
+# It is worth noting that we do meet the assumptions of linearity without doing any transformations to the variables in the full model. 
+
+# `car_volume` does not turnout to be significant in the full model. 
+```
+
+## Interaction beteen ChaChing*average_mpg
+```{r}
+library(car)
+CarPrice_Added$average_mpg <- as.numeric(CarPrice_Added$average_mpg)
+CarPrice_Added$car_volume <- as.numeric(CarPrice_Added$car_volume)
+m2 <- lm(price ~ ChaChing + carbody + curbweight + cylindernumber + enginelocation + peakrpm + car_volume + average_mpg, data=CarPrice_Added)
+summary(m2)
+vif(m2)
+
+m3 <- lm(price ~ ChaChing*average_mpg + carbody + curbweight + enginelocation + peakrpm + car_volume + average_mpg, data = CarPrice_Added)
+summary(m3) # R-squared:  0.9397
+plot(m3) # this looks okay but we can probably do better by adding in the transformation of the price variable
+vif(m3) # yikes...
+1/(1-0.9397) # vif: 16.58375 (bigger yikes)
+
+m4 <- lm(price^(-0.5) ~ ChaChing*average_mpg + carbody + curbweight + enginelocation + peakrpm + car_volume, data = CarPrice_Added)
+summary(m4) # R-squared:  0.8959
+plot(m4) # residuals vs. fitted looks way better. 
+vif(m4) # yikes...
+1/(1-0.8959) # vif: 9.606148 (less yikes)
+
+```
 
 
