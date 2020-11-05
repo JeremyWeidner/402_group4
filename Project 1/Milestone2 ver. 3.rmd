@@ -12,7 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 # Importing the Data:
 
 ```{r}
-library(readr)
+#library(readr)
 CarPrice <- read.csv("CarPrice_Assignment.csv")
 View(CarPrice)
 dim(CarPrice) # 205  26 
@@ -378,3 +378,15 @@ plot(model.d)
 vif(model.d)
 ```
 
+# Correlation and scatterplot matrix
+```{r}
+#install.packages("scatterplot3d")
+library(car)
+library(scatterplot3d)
+scatterplotMatrix(~car_volume + curbweight + peakrpm + stroke + average_mpg + boxcox_enginesize, data = CarPrice_Added, main="Scatter plot matrix for numerical variables",var.labels = c("car_volume","curbweight","peakrpm","stroke","average_mpg","enginesize"))
+
+sub1 <- cbind(CarPrice_Added[,c("car_volume","curbweight","peakrpm","stroke","average_mpg")],boxcox_enginesize)
+cor(sub1, use = "complete.obs")
+chart.Correlation(sub1)
+#We can't use some variables together since some of the correlations are too high.
+```
