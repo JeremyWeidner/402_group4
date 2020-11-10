@@ -1,0 +1,149 @@
+---
+title: "402_blockwise_model"
+author: "Jeremy Weidner"
+date: "November 10, 2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+getwd()
+
+df <- read.csv('standardized_cardata.csv')
+
+```
+
+
+
+# Going to do blockwise model regression, from our 3 main groups of variables:
+-- Car Description:
+- car name (which we will substitute brand_tier in for)
+- body of car
+- car volume
+- curb weight
+
+-- Engine Details:
+- Engine Location
+- Number of Cylinders
+- Fuel Type
+- Size of Engine
+- Stroke inside engine
+
+-- Car Performance Model:
+- peak RPM
+- Avg MPG
+
+
+```{r}
+# Car Description Model
+
+m1 <- lm(price ~ brand_tier + carbody + carvolume + curbweight, data = df)
+m2 <- lm(price ~ brand_tier + carbody +  curbweight, data = df) # carvolume not significant
+summary(m2) 
+plot(m2) 
+anova(m2, m1) # this shows we are correct to remove carvolume as when we add it, we don't get a significant increase 
+
+```
+
+We're now going to carry m2 into the next segment and add in our next category of variables - engine details.
+
+```{r}
+# Car Description Model
+
+m3 <- lm(price ~ brand_tier + carbody +  curbweight + enginelocation + cylindernumber + fueltype + enginesize + enginetype, data = df)
+# now remove variables that weren't significant.. enginetype only has one type that had significance so maybe remove as well
+m4 <- lm(price ~ brand_tier + carbody +  curbweight + enginelocation + cylindernumber +  enginesize + enginetype, data = df)
+summary(m4) 
+plot(m4) 
+anova(m2, m4, m3) # this shows we are correct to remove those variables in m4 because m3 with them included does not improve the fit
+
+
+```
+
+
+The only non-significant parameters that remain are certain levels of a categorical variable that does at some level have significance. Will leave them in for now but will look to remove later if necessary.
+
+Will now move forward with m4 and add in our third block of variables which are car performance.
+
+
+
+```{r}
+# Car Performance Model
+
+m5 <- lm(price ~ brand_tier + carbody +  curbweight + enginelocation + cylindernumber +  enginesize + enginetype + avg_mpg + peakrpm, data = df)
+# avg mpg does not come back as significant so we will remove and retest
+m6 <- lm(price ~ brand_tier + carbody +  curbweight + enginelocation + cylindernumber +  enginesize + enginetype + peakrpm, data = df)
+summary(m6) 
+plot(m6) 
+anova(m4, m6, m5) # we were correct to remove avg_mpg as it does not improve the fit. peakrpm however does improve the model fit.
+
+# at this point m6 is our final model
+```
+
+
+
+
+
+
+```{r}
+# here's a final model after reviewing industry literature, dividing variables into categories and performing blockwise regression on those categories.
+
+summary(m6)
+
+anova(m6)
+
+
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
