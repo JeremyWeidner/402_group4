@@ -59,9 +59,9 @@ We're now going to carry m2 into the next segment and add in our next category o
 ```{r}
 # Car Description Model
 
-m3 <- lm(price ~ brand_tier + carbody +  curbweight + enginelocation + cylindernumber + fueltype + enginesize + enginetype, data = df)
+m3 <- lm(price ~ brand_tier + carbody +  curbweight + enginelocation + cylindernumber + fueltype + enginesize , data = df)
 # now remove variables that weren't significant.. enginetype only has one type that had significance so maybe remove as well
-m4 <- lm(price ~ brand_tier + carbody +  curbweight + enginelocation + cylindernumber +  enginesize + enginetype, data = df)
+m4 <- lm(price ~ brand_tier + carbody +  curbweight + enginelocation + cylindernumber +  enginesize , data = df)
 summary(m4) 
 plot(m4) 
 anova(m2, m4, m3) # this shows we are correct to remove those variables in m4 because m3 with them included does not improve the fit
@@ -79,8 +79,8 @@ Will now move forward with m4 and add in our third block of variables which are 
 ```{r}
 # Car Performance Model
 
-m5 <- lm(price ~ brand_tier + carbody +  curbweight + enginelocation + cylindernumber +  enginesize + enginetype + avg_mpg + peakrpm, data = df)
-# avg mpg does not come back as significant so we will remove and retest
+m5 <- lm(price ~ brand_tier + carbody +  curbweight + enginelocation + cylindernumber +  enginesize + avg_mpg + peakrpm, data = df)
+# avg mpg does not come back as significant so we will remove and retest. Also engine type lost it's significance once other variables were added in so we will remove it
 m6 <- lm(price ~ brand_tier + carbody +  curbweight + enginelocation + cylindernumber +  enginesize + peakrpm, data = df)
 summary(m6) 
 plot(m6) 
