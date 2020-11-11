@@ -1,0 +1,28 @@
+---
+title: "402 Stepwise Regression"
+output: html_notebook
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+df <- standardized_cardata
+```
+
+```{r}
+#df$brand_tier <- ifelse (df['brand_tier'] =='low',1,ifelse(df['brand_tier']=='med',2,3))
+FitAll <- lm(price ~ carvolume + enginesize +  peakrpm + avg_mpg + curbweight + horsepower, df)
+f_FitAll<-formula(FitAll)
+
+fitstart <- lm(price~1,df)
+summary(fitstart)
+```
+
+```{r}
+
+stepwise<-step(fitstart, direction ="both", scope= f_FitAll)
+```
+
