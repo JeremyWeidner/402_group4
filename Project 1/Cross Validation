@@ -1,0 +1,68 @@
+
+# model from milestone 2
+```{r}
+
+CarPrice_Added <- CarPrice_Added %>% arrange(price)
+## Cross Validation
+set.seed(1021) #70-30 split
+index <- sample(1:205,0.7*205)
+train <- CarPrice_Added[index,]
+test <- CarPrice_Added[-index,]
+
+train <- train %>% arrange(price)
+test <- test %>% arrange(price)
+
+model.d <- lm(price ~ ChaChing:car_volume + carbody + enginesize + enginelocation + cylindernumber  +  peakrpm , data=train)
+summary(model.d) #94.07%
+par(mfrow=c(2,2))
+plot(model.d)
+vif(model.d)
+
+predict.test <- predict(model.d, data=test)
+
+
+plot(train$price, main = "Model Fit on Training Data")
+lines(predict.test, col = "blue")
+
+#definetly overfitting
+plot(test$price, main = "Model Fit on Testing Data")
+lines(predict.test, col = "blue")
+
+
+model.e <- lm(price ~ ChaChing + enginesize + enginelocation  , data=train)
+summary(model.e) #91.2%
+vif(model.e)
+predict.test <- predict(model.e, data=test)
+plot(test$price)
+lines(predict.test)
+```
+
+```{r}
+## Cross Validation
+set.seed(1021) #70-30 split
+index <- sample(1:205,0.7*205)
+train <- CarPrice_Added[index,]
+test <- CarPrice_Added[-index,]
+
+train <- train %>% arrange(price)
+test <- test %>% arrange(price)
+
+model.d <- lm(price ~ ChaChing:car_volume + carbody + enginesize + enginelocation + cylindernumber  +  peakrpm , data=train)
+summary(model.d) #94.07%
+par(mfrow=c(2,2))
+plot(model.d)
+vif(model.d)
+
+predict.test <- predict(model.d, newdata=test)
+
+
+
+par(mfrow = c(1,2))
+plot(train$price, main = "Model Fit on Training Data")
+lines(model.d$fitted.values, col = "blue")
+
+#definetly overfitting
+plot(test$price, main = "Model Fit on Testing Data")
+lines(predict.test, col = "blue")
+
+```
