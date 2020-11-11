@@ -1,0 +1,47 @@
+---
+title: "402 Stepwise Regression"
+output: html_notebook
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+df <- standardized_cardata
+df1<-df
+unique(df$enginelocation)
+```
+
+Brand Tier: 1 for low
+            2 for med
+            3 for high
+Convert Cylinder Number from word to number 
+
+```{r}
+
+df1$brand_tier <- ifelse (df['brand_tier'] =='low',1,ifelse(df['brand_tier']=='med',2,3))
+
+df1$cylindernumber <- ifelse (df['cylindernumber'] =='four',4,ifelse(df['cylindernumber']=='six',6,ifelse(df['cylindernumber']=='five',5,ifelse(df['cylindernumber']=='three',3,ifelse(df['cylindernumber']=='twelve',12,ifelse(df['cylindernumber']=='two',2,8))))))
+
+df1$enginelocation<- ifelse(df['enginelocation'] =='front',1,2)
+
+FitAll_1 <- lm(price ~ brand_tier  +carvolume + enginesize +  peakrpm + avg_mpg + curbweight + horsepower,df1)
+f_FitAll_1<-formula(FitAll_1)
+
+```
+
+
+```{r}
+fitstart <- lm(price~1,df)
+summary(fitstart)
+```
+
+```{r}
+
+stepwise<-step(fitstart, direction ="both", scope= f_FitAll_1)
+
+
+```
+

@@ -1,0 +1,218 @@
+---
+title: "402_blockwise_model"
+author: "Jeremy Weidner"
+date: "November 10, 2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+getwd()
+
+df <- read.csv('standardized_cardata.csv')
+
+# Transform cylinder variable
+for(i in 1:length(df$cylindernumber)){
+if(df$cylindernumber[i] %in% c("eight","twelve")){
+  df$cylindernumber[i] <- "eight+"
+} else{
+  if(df$cylindernumber[i] %in% c("five","six")){
+    df$cylindernumber[i] <- "five/six"
+  } else{
+  if(df$cylindernumber[i] %in% c("two","three")){
+    df$cylindernumber[i] <- "<four"
+  } else{
+    df$cylindernumber[i] <- "four"
+}
+  }
+}
+}
+
+df$cylindernumber  <- factor(df$cylindernumber ,
+    levels = c('<four','four', 'five/six', 'eight+'), ordered = TRUE)
+
+```
+
+
+
+# Going to do blockwise model regression, from our 3 main groups of variables:
+-- Car Description:
+- car name (which we will substitute brand_tier in for)
+- body of car
+- car volume
+- curb weight
+
+-- Engine Details:
+- Engine Location
+- Number of Cylinders
+- Fuel Type
+- Size of Engine
+- Stroke inside engine
+
+-- Car Performance Model:
+- peak RPM
+- Avg MPG
+
+
+```{r}
+# Car Description Model
+
+m1 <- lm(price ~ brand_tier + carbody + carvolume + curbweight, data = df)
+m2 <- lm(price ~ brand_tier + carbody +  curbweight, data = df) # carvolume not significant
+summary(m2) 
+plot(m2) 
+anova(m2, m1) # this shows we are correct to remove carvolume as when we add it, we don't get a significant increase 
+
+```
+
+We're now going to carry m2 into the next segment and add in our next category of variables - engine details.
+
+```{r}
+# Car Description Model
+
+m3 <- lm(price ~ brand_tier + carbody +  curbweight + enginelocation + cylindernumber + fueltype + enginesize +stroke , data = df)
+# Now remove variables that weren't significant.
+m4 <- lm(price ~ brand_tier + carbody +  curbweight + enginelocation + cylindernumber +  enginesize , data = df)
+summary(m4) 
+plot(m4) 
+anova(m2, m4, m3) # this shows we are correct to remove those variables in m4 because m3 with them included does not improve the fit
+
+
+```
+
+
+The only non-significant parameters that remain are certain levels of a categorical variable that does at some level have significance. Will leave them in for now but will look to remove later if necessary.
+
+Will now move forward with m4 and add in our third block of variables which are car performance.
+
+
+
+```{r}
+# Car Performance Model
+
+m5 <- lm(price ~ brand_tier + carbody +  curbweight + enginelocation + cylindernumber +  enginesize + avg_mpg + peakrpm, data = df)
+summary(m5)
+# avg mpg does not come back as significant so we will remove and retest.
+m6 <- lm(price ~ brand_tier + carbody +  curbweight + enginelocation + cylindernumber +  enginesize + peakrpm, data = df)
+summary(m6) 
+plot(m6) 
+anova(m4, m6, m5) # we were correct to remove avg_mpg as it does not improve the fit. peakrpm however does improve the model fit.
+
+# at this point m6 is our final model
+```
+
+
+
+
+
+
+```{r}
+# here's a final model after reviewing industry literature, dividing variables into categories and performing blockwise regression on those categories.
+
+summary(m6)
+
+anova(m6)
+
+
+
+
+```
+
+# Check multicollinearity 
+```{r}
+
+AIC(m6) #43.50548
+BIC(m6) #103.3197
+# R2 adj:  93.41%
+
+#library(car)
+vif(m6) #curbweight and engine size > 10 
+
+m7 <- lm(price ~ brand_tier + carbody +  curbweight + enginelocation + cylindernumber + peakrpm, data = df)
+summary(m6)
+anova(m7,m6) # adding engine size does improve the model but we remove it so we do not have high multicollinearity 
+
+vif(m7) #all less than 5
+
+plot(m7) 
+
+AIC(m7) #59.30549
+BIC(m7) #115.7967
+# R2 adj:  93.41%
+```
+# m7 without influential point: 
+
+```{r}
+dfip <- df[-17,]
+
+m8 <- lm(price ~ brand_tier + carbody +  curbweight + enginelocation + cylindernumber + peakrpm, data = dfip)
+summary(m8)
+AIC(m8) # 18.71219
+BIC(m8) # 65.16587
+vif(m8) # great
+plot(m8)
+
+```
+
+library(sjPlot)
+library(sjmisc)
+library(sjlabelled)
+
+tab_model(
+  m1, m2, m3, m4,m5,m6,m7,m8,
+  dv.labels = c("Model1", "Model2", "Model3", "Model4","Model5","Model6","Model7","Model8"),
+  show.ci = FALSE,
+  transform = NULL
+)
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

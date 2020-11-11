@@ -1,0 +1,31 @@
+## Cross Validation
+```{r}
+# Import standardized car dataset
+df_std_car <- read.csv("standardized_cardata.csv")
+
+# model <- glm(price ~ brand_tier:carvolume + 
+#                      carbody + 
+#                      enginesize + 
+#                      enginelocation + 
+#                      peakrpm, 
+#              data = df_std_car)
+# 
+# six_fold_cv <- cv.glm(data = df_std_car, model, K = 6)
+# six_fold_cv$delta
+# 
+# loocv <- cv.glm(data = df_std_car, model)
+# loocv$delta
+
+library(caret)
+
+set.seed(1)
+ten_fold_cv <- train(price ~ brand_tier:carvolume + 
+                             carbody + 
+                             enginesize + 
+                             enginelocation + 
+                             peakrpm,
+                     trControl = trainControl(method = "cv", number = 10),
+                     method = "lm",
+                     data = df_std_car)
+ten_fold_cv
+```
