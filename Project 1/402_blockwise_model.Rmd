@@ -106,6 +106,28 @@ anova(m6)
 
 ```
 
+# Check multicollinearity 
+```{r}
+
+AIC(m6) #43.50548
+BIC(m6) #103.3197
+# R2 adj:  93.41%
+
+vif(m6) #curbweight and engine size > 10 
+
+m7 <- lm(price ~ brand_tier + carbody +  curbweight + enginelocation + cylindernumber + peakrpm, data = df)
+summary(m6)
+anova(m7,m6) # adding engine size does improve the model but we remove it so we do not have high multicollinearity 
+
+vif(m7) #all less than 5
+
+plot(m7) 
+
+AIC(m7) #59.30549
+BIC(m7) #115.7967
+# R2 adj:  93.41%
+
+```
 
 
 
