@@ -81,7 +81,7 @@ Will now move forward with m4 and add in our third block of variables which are 
 
 m5 <- lm(price ~ brand_tier + carbody +  curbweight + enginelocation + cylindernumber +  enginesize + enginetype + avg_mpg + peakrpm, data = df)
 # avg mpg does not come back as significant so we will remove and retest
-m6 <- lm(price ~ brand_tier + carbody +  curbweight + enginelocation + cylindernumber +  enginesize + enginetype + peakrpm, data = df)
+m6 <- lm(price ~ brand_tier + carbody +  curbweight + enginelocation + cylindernumber +  enginesize + peakrpm, data = df)
 summary(m6) 
 plot(m6) 
 anova(m4, m6, m5) # we were correct to remove avg_mpg as it does not improve the fit. peakrpm however does improve the model fit.
