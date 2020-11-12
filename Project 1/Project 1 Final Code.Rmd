@@ -423,8 +423,8 @@ ggplot(aes(x = carvolume), data = CarPrice)+geom_histogram() + labs(title = "His
 CarPrice$avg_mpg <- rowMeans(CarPrice[, c(24, 25)])
 
 summary(CarPrice$average_mpg)
-ggplot(aes(y = average_mpg), data = CarPrice)+geom_boxplot() + labs(title = "Boxplot of average_mpg")
-ggplot(aes(x = average_mpg), data = CarPrice)+geom_histogram() + labs(title = "Histogram of average_mpg")
+ggplot(aes(y = avg_mpg), data = CarPrice)+geom_boxplot() + labs(title = "Boxplot of average_mpg")
+ggplot(aes(x = avg_mpg), data = CarPrice)+geom_histogram() + labs(title = "Histogram of average_mpg")
 ```
 
 ### More Numerical Variable Exploration
@@ -644,6 +644,22 @@ lines(m7train$fitted.values, col = "blue")
 
 plot(test$price, main = "Model 7 Fit on Testing Data", ylab = "Testing Price")
 lines(predict7, col = "blue")
+
+```
+
+### Perform Stepwise Regression
+```{r}
+
+# get the formula for model 8 
+f_fit_m8<-formula(m8)
+
+# create the starting module
+fitstart <- lm(price~1,df)
+summary(fitstart)
+
+
+sw_8step <-step(fitstart, direction ="both", scope= f_fit_m8)
+
 
 ```
 
