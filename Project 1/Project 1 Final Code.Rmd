@@ -663,6 +663,20 @@ sw_8step <-step(fitstart, direction ="both", scope= f_fit_m8)
 
 ```
 
+# Marginal Model Plots 
+
+```{r}
+library(car)
+mmps(m8, layout = c(2,2), ylab = "price")
+
+```
+
+Our final model (m8) seems to be a pretty good fit for the data because the broken red line that results from regression and the blue LOESS line that is based on moving average both follow the same pattern.
+
+
+
+
+
 
 
 
