@@ -10,8 +10,8 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r}
 df <- standardized_cardata
-df1<-df
-unique(df$enginelocation)
+df1<- df[-c(17,75),]
+
 ```
 
 Brand Tier: 1 for low
@@ -21,14 +21,17 @@ Convert Cylinder Number from word to number
 
 ```{r}
 
-df1$brand_tier <- ifelse (df['brand_tier'] =='low',1,ifelse(df['brand_tier']=='med',2,3))
+df1$brand_tier <- ifelse (df1['brand_tier'] =='low',1,ifelse(df1['brand_tier']=='med',2,3))
 
-df1$cylindernumber <- ifelse (df['cylindernumber'] =='four',4,ifelse(df['cylindernumber']=='six',6,ifelse(df['cylindernumber']=='five',5,ifelse(df['cylindernumber']=='three',3,ifelse(df['cylindernumber']=='twelve',12,ifelse(df['cylindernumber']=='two',2,8))))))
+df1$cylindernumber <- ifelse (df1['cylindernumber'] =='four',2,ifelse(df1['cylindernumber']==c('six','five'),3,ifelse(df1['cylindernumber']==c('eight','twelve'),4,1)))
 
-df1$enginelocation<- ifelse(df['enginelocation'] =='front',1,2)
+df1$enginelocation<- ifelse(df1['enginelocation'] =='front',1,2)
 
-FitAll_1 <- lm(price ~ brand_tier  +carvolume + enginesize +  peakrpm + avg_mpg + curbweight + horsepower,df1)
-f_FitAll_1<-formula(FitAll_1)
+
+fit_m8 <- lm(price ~ brand_tier + carbody +  curbweight + enginelocation + cylindernumber + peakrpm,df1)
+df[sample(nrow(df2), 3), ]
+
+f_fit_m8<-formula(fit_m8)
 
 ```
 
@@ -39,9 +42,6 @@ summary(fitstart)
 ```
 
 ```{r}
-
-stepwise<-step(fitstart, direction ="both", scope= f_FitAll_1)
-
-
+stepwise<-step(fitstart, direction ="both", scope= f_fit_m8)
 ```
 

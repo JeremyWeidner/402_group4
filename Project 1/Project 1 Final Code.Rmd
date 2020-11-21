@@ -1,0 +1,870 @@
+---
+title: "Stats 402 ~ Project 1 Code"
+author: 
+- "Group 4 ~ Britney Brown, Harrison DiStefano, Jaehui(Jaehee) Jeong, Lisa Kaunitz"
+- "Tianyang Liu, Yuandong (David) Sun, Jeremy Weidner"
+date: "11/17/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Importing the Data
+
+```{r}
+library(readr)
+CarPrice <- read.csv("CarPrice_Assignment.csv")
+# View(CarPrice)
+dim(CarPrice) # 205 observations, 26 variables
+```
+
+# Initial Exploratory Data Analysis
+
+```{r}
+# install.packages("DataExplorer")
+# library(DataExplorer)
+# create_report(CarPrice)
+# plot_str(CarPrice)
+```
+
+# Data Wrangling/Cleaning
+
+## Categorical Varibles
+
+### Transform "Car Name" variable from make and model levels to make only
+
+Oue research questions are focused on general car price prediction not competing against specific cars, so we want to reduce the levels to make only.
+
+```{r}
+library(dplyr)
+library(stringr)
+unique(CarPrice$CarName) #147 unique levels, too much for 205 observations
+
+
+# manually transform the variable levels using dplyr
+
+# Alfa-Romero
+CarPrice <- CarPrice %>% 
+  mutate(CarName = replace(CarName, 
+                           CarName == "alfa-romero giulia" |
+                             CarName == "alfa-romero stelvio" |
+                             CarName == "alfa-romero Quadrifoglio", "alfa-romero"))
+
+# audi
+CarPrice <- CarPrice %>% 
+  mutate(CarName = replace(CarName, 
+                           CarName == "audi 100 ls" |
+                             CarName == "audi 100ls" |
+                             CarName == "audi fox" |
+                             CarName == "audi 5000" |
+                             CarName ==  "audi 4000" |
+                             CarName == "audi 5000s (diesel)", "audi"))
+
+# after research, found an easier way to transform using ifelse statements
+
+# bmw
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "bmw", "bmw", CarPrice$CarName )
+
+# cherolet
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "chevrolet", "chevrolet", CarPrice$CarName )
+
+# dodge
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "dodge", "dodge", CarPrice$CarName )
+
+# honda
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "honda", "honda", CarPrice$CarName )
+
+# isuzu 
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "isuzu", "isuzu", CarPrice$CarName )
+
+# jaguar
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "jaguar", "jaguar", CarPrice$CarName )
+
+# mazda: some are named maxda
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "maxda", "mazda", CarPrice$CarName )
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "mazda", "mazda", CarPrice$CarName )
+
+# buick
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "buick", "buick", CarPrice$CarName )
+
+# mercury
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "mercury", "mercury", CarPrice$CarName )
+
+# mitsubishi
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "mitsubishi", "mitsubishi", CarPrice$CarName )
+
+# nissan 
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "nissan", "nissan", CarPrice$CarName )
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "Nissan", "nissan", CarPrice$CarName )
+
+# peugeot
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "peugeot", "peugeot", CarPrice$CarName )
+
+# plymouth
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "plymouth", "plymouth", CarPrice$CarName )
+
+# porsche
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "porsche", "porsche", CarPrice$CarName )
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "porcshce", "porsche", CarPrice$CarName )
+
+# renault
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "renault", "renault", CarPrice$CarName )
+
+# saab
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "saab", "saab", CarPrice$CarName )
+
+# subaru
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "subaru", "subaru", CarPrice$CarName )
+
+# toyota
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "toyota", "toyota", CarPrice$CarName )
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "toyouta", "toyota", CarPrice$CarName )
+
+# vokswagen
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "volkswagen", "volkswagen", CarPrice$CarName )
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "vokswagen", "volkswagen", CarPrice$CarName )
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "vw", "volkswagen", CarPrice$CarName )
+
+# volvo
+CarPrice$CarName <- ifelse(word(CarPrice$CarName,1)== "volvo", "volvo", CarPrice$CarName )
+
+unique(CarPrice$CarName) # all cleaned up, only the 22 levels of the make of the car- no longer make and model
+```
+
+### Create a New Variable "Brand Tier" using "Car Name"
+
+After literature review and the following analysis, we realized that we should further reduce the 22 levels of Car Name into categories describing the typical brand tier for a company such as luxury vehicles, economy cars, and mid-large family vans. Since our research question is focused on predicting car prices of the U.S. automobile market, we think this approach will give us a more flexible approach in the analysis. This way our model can be generalized to car companies outside of the dataset based on their brand tier. 
+
+```{r}
+# find the number of counts for each level
+df1<- CarPrice
+df1<- df1 %>% 
+  mutate(allcars = factor(CarName)) %>% 
+  group_by(allcars) %>%    
+  summarise(counts= n()) %>% #count number of car make
+  arrange(desc(counts)) %>%   # sort by counts 
+  mutate(allcars = factor(allcars, allcars))
+df1 #many levels have less than 5 observations
+
+# graph df1
+library(ggplot2)
+ggplot(df1, aes(x = allcars, y= counts)) + #define graphical space
+  geom_bar(aes(x = allcars, y= counts, fill = counts), width = 0.7, stat = "identity") +  #define bar chart details
+  theme(axis.text.x = element_text(size=9, angle=45))+ #angle levels so they do not overlap
+  ggtitle("Bar Plot of Car Name by Observation Count") + xlab("Car Name") + #label
+  geom_text(aes(label= counts),vjust=1.0, color="white", size=3.0) #add the number of counts onto the bars
+
+
+# calculate the mean price for all the cars in a company
+df2<- CarPrice
+df2<- df2 %>% 
+  mutate(allcars = factor(CarName)) %>% 
+  group_by(allcars) %>%    
+  summarise(mean_prices= mean(price,na.rm=T),
+            counts = n()) %>% #calculate mean
+  arrange(-mean_prices) %>%   # sort by descending order
+  mutate(allcars = factor(allcars, allcars))
+glimpse(df2) #view mean prices
+
+#graph df2
+ggplot(df2, aes(x = allcars,y=mean_prices)) + #define graphical space
+  geom_bar(aes(fill = mean_prices),stat = "identity", width =0.7) + #define bar chart details
+  theme(axis.text.x = element_text(size=9, angle=45))+ #angle levels so they do not overlap
+  ggtitle("Bar Plot of Mean Car Prices by Car Company Names") +xlab("Car Name") + #label 
+  geom_text(aes(label= counts),vjust=2.0, color="white", size=3.0)
+
+
+# group the light, medium, and dark blue bars into high, medium, and low brand tiers
+
+high <- df2$allcars[df2$mean_prices > 20000] #cutoff chosen from above graph
+low <- df2$allcars[df2$mean_prices < 12000] #cutoff chosen from above graph
+
+for(i in 1:length(CarPrice$CarName)){
+if(CarPrice$CarName[i] %in% high){
+  CarPrice$brand_tier[i] <- "high"
+} else{
+  if(CarPrice$CarName[i] %in% low){
+    CarPrice$brand_tier[i] <- "low"
+  } else{
+    CarPrice$brand_tier[i] <- "medium"
+  }
+}
+}
+table(CarPrice$brand_tier) #now we have a variable with 3 levels with enough observations in each
+
+# adjust structure so brand_tier is an ordinal variable
+CarPrice$brand_tier  <- factor(CarPrice$brand_tier ,
+    levels = c('low','medium', 'high'),ordered = TRUE)
+
+
+#Graph Car Name (22 levels)
+ggplot(CarPrice, aes(x = CarName,y=price, fill=CarName)) + geom_boxplot(alpha = 0.5) +   
+  theme(axis.text.x = element_text(size=9, angle=45)) + ggtitle("Before Transformation")
+
+#Graph new Brand Tier (3 levels)
+ggplot(CarPrice, aes(x = brand_tier,y=price, fill=brand_tier)) + geom_boxplot(fill = c("darkblue", "blue", "lightblue"), alpha = 0.6) + 
+  labs(x = "Brand Tier") + ggtitle("After Transformation") 
+
+# all boxes and their means do not overlap, we believe this will be a significant variable in predicting car price
+
+#check how much this variable explains price
+model.brand_tier <- lm(price ~ brand_tier, data=CarPrice)
+summary(model.brand_tier ) #76% R squared with all highly significant levels
+```
+
+### Tranform "Number of Cylinder" Variable
+
+We will also reduce the number of levels for the cylinder variable since many levels have less than 5 observations.
+
+```{r}
+### original variable ###
+table(CarPrice$cylindernumber) # 7 levels, many with very low counts
+ggplot(CarPrice) + geom_boxplot(aes(x=cylindernumber, y=price, fill=cylindernumber))
+
+# from boxplots above (and literature review) we can group cylinders into four categories:
+# 8 or more cylinders(very rare, typically only found in luxury, high brand cars)
+# 5-6 cylinders (not as rare as 8+ or common as 4, also found in more expensive vehicles)
+# 4 cylinders (the most common, used in all brand tiers)
+# less than 4 cylinders (very rare, typically found in older, cheap cars)
+
+CarPrice$cylinder_level <- CarPrice$cylindernumber #define a new variable
+for(i in 1:length(CarPrice$cylindernumber)){
+if(CarPrice$cylindernumber[i] %in% c("eight","twelve")){
+  CarPrice$cylinder_level[i] <- "eight+"
+} else{
+  if(CarPrice$cylindernumber[i] %in% c("five","six")){
+    CarPrice$cylinder_level[i] <- "five/six"
+  } else{
+  if(CarPrice$cylindernumber[i] %in% c("two","three")){
+    CarPrice$cylinder_level[i] <- "<four"
+  } else{
+    CarPrice$cylinder_level[i] <- "four"
+}
+  }
+}
+}
+
+# adjust structure so it is an ordinal variable
+CarPrice$cylinder_level  <- factor(CarPrice$cylinder_level ,
+    levels = c('<four','four', 'five/six', 'eight+'), ordered = TRUE)
+
+table(CarPrice$cylinder_level) #4 levels now
+ggplot(CarPrice) + geom_boxplot(aes(x=cylinder_level, y=price, fill=cylinder_level), alpha = 0.7)
+
+# most boxes do not overlap, and means are different, we believe this will be a significant variable in predicting car price
+
+#check how much this variable explains price
+model.cylinder <- lm(price ~ cylinder_level, data=CarPrice)
+summary(model.cylinder) #62% R squared with all highly significant levels
+```
+
+### More Cateogrical Variable Exploration
+```{r}
+### fuel system ###
+boxplot(price ~ fuelsystem, data=CarPrice)
+# many levels, means do not vary greatly
+#literature review also indicates this is not a good variable for price prediction
+
+
+
+### fuel type ###
+table(CarPrice$fueltype) 
+
+ggplot(CarPrice) + geom_bar(aes(x=fueltype, fill = fueltype))
+ggplot(CarPrice) + geom_boxplot(aes(x=fueltype, y=price, fill = fueltype))
+#boxes are similar, we do not think this one will be significant
+
+model.fueltype <- lm(price ~ fueltype, data=CarPrice)
+summary(model.fueltype) #0.01% R squared
+#verifies our hypothesis but we will use this in the model creation for now since literature indicates it is very important
+
+
+
+### car body ###
+table(CarPrice$carbody)
+
+ggplot(CarPrice) + geom_bar(aes(x=carbody, fill = carbody))
+ggplot(CarPrice) + geom_boxplot(aes(x=carbody, y=price, fill = carbody))
+#difference between convertible/hardtop and hatchback/sedan/wagon
+
+model.carbody <- lm(price ~ carbody, data=CarPrice)
+summary(model.carbody) #14% R squared, most levels significant
+# we will use this variable in our analysis
+
+
+
+### engine location ###
+table(CarPrice$enginelocation) #only 3 counts in rear
+
+ggplot(CarPrice) + geom_bar(aes(x=enginelocation, fill=enginelocation))
+ggplot(CarPrice) + geom_boxplot(aes(x=enginelocation, y=price, fill=enginelocation))
+#it is rare but if a car has a rear engine, it is much higher priced
+
+enginelocation <- lm(price ~ enginelocation, data=CarPrice)
+summary(enginelocation) #10% R squared, significant
+#we will use this variable in the analysis 
+
+
+
+### engine type ###
+table(CarPrice$enginetype)
+#different spreads and means, so could be a significant variable
+ggplot(CarPrice) + geom_boxplot(aes(x=enginetype, y=price, fill=enginetype))
+#however, since we do not know the difference between all the levels listed, we will not use this variable as is
+```
+
+## Numerical Variables
+
+[insert scatterplots and other graphs here]
+
+### Explore Transformations for Response Variable, Price
+```{r}
+### original price, no transformation ###
+
+# install.packages("e1071")
+library(e1071)
+ggplot(aes(x=price), data = CarPrice) + 
+  geom_histogram(aes(y = ..density..), color = "grey30", fill = "white") +
+  geom_density(alpha = 0.2, fill = "antiquewhite3") + 
+  labs(title = "Histogram of Price without Transformation") 
+# This is heavily right skewed... fewer expensive cars on the market
+  
+# Checking skewness:
+skewness(CarPrice$price) # 1.751748 (to the right)
+
+### use symbox for transformation ###
+library(car)
+symbox(~price, data = CarPrice) # -0.5 looks like it would be the best transformation. 
+
+ggplot(aes(x=price^(-0.5)), data = CarPrice) + 
+  geom_histogram(aes(y = ..density..), color = "grey30", fill = "white") +
+  geom_density(alpha = 0.2, fill = "antiquewhite3") + labs(title = "Histogram of Price with -0.5 Transformation", x= "price")
+
+# Checking Skewness: 
+skewness(CarPrice$price^(-0.5)) # -0.2015099 (to the left)
+
+### Box Cox transformation ###
+library(forecast)
+lambda <- BoxCox.lambda(CarPrice$price)
+lambda # -0.9999242 is the recommended lambda
+boxcoxprice <- CarPrice$price^lambda
+ggplot(aes(x = boxcoxprice), data = CarPrice) +
+  geom_histogram(aes(y = ..density..), color = "grey30", fill = "white") +
+  geom_density(alpha = 0.2, fill = "antiquewhite3") + labs(title = "Histogram of Price with BoxCox lambda Transformation", x= "price")
+
+# Checking skewness: 
+skewness(CarPrice$price^lambda) # 0.2059521 (to the right)
+
+# Both transformations improve the spread, it looks like the -0.5 transformation does slightly better. 
+```
+
+Note: Further in our analysis, we standardize all our numerical variables and no longer use the -0.5 or boxcox transformation listed here.
+
+### Explore Transformations for a Predictor, Size of Engine
+```{r}
+### original, no transformation ###
+summary(CarPrice$enginesize)
+#graph original
+ggplot(aes(x=CarPrice$enginesize), data = CarPrice) + 
+  geom_histogram(aes(y = ..density..), color = "grey30", fill = "white") +
+  geom_density(alpha = 0.2, fill = "antiquewhite3") + 
+  labs(title = "Histogram of Engine Size without Transformation") # variable is right skewed
+
+#check skewness
+skewness(CarPrice$enginesize) #1.919245
+
+### use symbox for transformation ###
+symbox(~enginesize, data = CarPrice) #choose the log transform
+
+#log transformation
+log_eng <- log(CarPrice$enginesize)
+
+#graph the log transform
+ggplot(aes(x=log_eng), data = CarPrice) + 
+  geom_histogram(aes(y = ..density..), color = "grey30", fill = "white") +
+  geom_density(alpha = 0.2, fill = "antiquewhite3") + 
+  labs(title = "Histogram: Predictor Variable Engine Size (log transformation)")
+
+#check skewness
+skewness(log_eng) #0.8453149
+
+### boxcox transformation ###
+library(forecast)
+lambda.e <-BoxCox.lambda(CarPrice$enginesize)
+lambda.e #-0.9999242 recommended lambda
+boxcox_enginesize<-CarPrice$enginesize^lambda.e
+
+ggplot(aes(x=boxcox_enginesize), data = CarPrice) +
+  geom_histogram(aes(y = ..density..), color = "grey30", fill = "white") +
+  geom_density(alpha = 0.2, fill = "antiquewhite3") +
+  labs(title = "Histogram: Predictor Variable Engine Size (boxcox transformation)")
+
+#check skewness
+skewness(boxcox_enginesize) #0.03646001
+
+# The boxcox transformation fixes the skewness the most and is therefore, the best transformation. 
+```
+
+### Other Numerical Variable Transformations
+
+We noticed a few numerical variables than can be merged together for simplicity. 
+```{r}
+### car volume ###
+# length x width x height
+CarPrice$carvolume <- CarPrice$carlength*CarPrice$carwidth*CarPrice$carheight
+
+summary(CarPrice$carvolume)
+ggplot(aes(y = carvolume), data = CarPrice)+geom_boxplot() + labs(title = "Boxplot of Car Volume")
+ggplot(aes(x = carvolume), data = CarPrice)+geom_histogram() + labs(title = "Histogram of Car Volume")
+
+cor(CarPrice$citympg, CarPrice$highwaympg)
+
+
+### average mpg ###
+# average of city and highway mpg
+CarPrice$avg_mpg <- rowMeans(CarPrice[, c(24, 25)])
+
+summary(CarPrice$average_mpg)
+ggplot(aes(y = avg_mpg), data = CarPrice)+geom_boxplot() + labs(title = "Boxplot of average_mpg")
+ggplot(aes(x = avg_mpg), data = CarPrice)+geom_histogram() + labs(title = "Histogram of average_mpg")
+```
+
+### More Numerical Variable Exploration
+```{r}
+### stroke ###
+summary(CarPrice$stroke)
+ggplot(aes(y = stroke), data = CarPrice)+geom_boxplot() + labs(title = "Boxplot of Stroke")
+ggplot(aes(x = stroke), data = CarPrice)+geom_histogram() + labs(title = "Histogram of Stroke")
+
+### car peak RPM ###
+summary(CarPrice$peakrpm)
+ggplot(aes(y = peakrpm), data = CarPrice)+geom_boxplot() + labs(title = "Boxplot of peakrpm")
+ggplot(aes(x = peakrpm), data = CarPrice)+geom_histogram() + labs(title = "Histogram of peakrpm")
+
+### curb weight ###
+summary(CarPrice$curbweight)
+ggplot(aes(y = curbweight), data = CarPrice)+geom_boxplot() + labs(title = "Boxplot of Curbweight")
+ggplot(aes(x = curbweight), data = CarPrice)+geom_histogram() + labs(title = "Histogram of Curbweight")
+
+```
+
+### Standardize Numerical Variables
+
+As seen above, quite a few of our variables, including price, could benefit from standardization.
+[Jeremy please list package and give some detail here]
+
+```{r}
+# importing standardized dataset back into R
+df <- read.csv("https://raw.githubusercontent.com/JeremyWeidner/402_group4/main/Project%201/standardized_cardata.csv")
+
+# now all of our numerical variables have a standard normal distribution (mean = 0 and sd = 1)
+head(df)
+```
+
+# Final Model
+
+## Blockwise Regression
+
+We will now create a blockwise model regression, from our 3 main groups of variables:
+
+-- Car Description:
+- car name (which we will substitute with our brand_tier variable)
+- body of car
+- car volume
+- curb weight
+
+-- Engine Details:
+- Engine Location
+- Number of Cylinders (which we will substitute with our reduced cylinder_level variable)
+- Fuel Type
+- Size of Engine
+- Stroke inside engine
+
+-- Car Performance Model:
+- peak RPM
+- Avg MPG
+
+### Building the Model
+
+```{r}
+# Car Description Model
+m1 <- lm(price ~ brand_tier + carbody + carvolume + curbweight, data = df)
+summary(m1) # carvolume not significant
+
+# Remove insignificant carvolume
+m2 <- lm(price ~ brand_tier + carbody +  curbweight, data = df) 
+summary(m2) 
+
+par(mfrow=c(2,2))
+plot(m2) 
+
+anova(m2, m1) # this shows we are correct to remove carvolume as when we add it, we don't get a significant increase 
+```
+
+We're going to carry m2 into the next segment and add in our next category of variables - engine details.
+
+```{r}
+# Car Description + Engine Details Model
+m3 <- lm(price ~ brand_tier + carbody +  curbweight + enginelocation + cylinder_level + fueltype + enginesize +stroke , data = df)
+summary(m3) #stroke and fuel type are not significant 
+
+# Remove insignificant variables
+m4 <- lm(price ~ brand_tier + carbody +  curbweight + enginelocation + cylinder_level +  enginesize , data = df)
+summary(m4)
+
+par(mfrow=c(2,2))
+plot(m4) 
+
+anova(m2, m4, m3) # this shows we are correct to remove those insignificant engine variables in m4 because m3 with them included does not improve the fit
+```
+
+
+The only non-significant parameters that remain are certain levels of a categorical variable that do, at some level, have significance. We will leave them in for now but will look into removing them later if necessary.
+
+We will now move forward with m4 and add in the third and final block of variables: car performance
+
+```{r}
+# Car Description + Engine Details Model + Car Performance Model
+m5 <- lm(price ~ brand_tier + carbody +  curbweight + enginelocation + cylinder_level +  enginesize + avg_mpg + peakrpm, data = df)
+summary(m5) #avg_mpg is not significant
+
+# Remove insignificant avg_mpg variable and retest
+m6 <- lm(price ~ brand_tier + carbody +  curbweight + enginelocation + cylinder_level +  enginesize + peakrpm, data = df)
+summary(m6)
+
+anova(m4, m6, m5) # we were correct to remove avg_mpg as it does not improve the fit, peakrpm however does improve the model fit.
+
+# at this point, this is  our final model after reviewing industry literature, dividing variables into categories and performing blockwise regression on those categories
+anova(m6)
+```
+
+### Check Assumptions
+
+We will now check our model to see if it violates any assumptions such as equal variance of the residuals, linearity, and multicollinearity.
+
+```{r}
+# check different metrics
+# R2 adj:  93.24%
+AIC(m6) # 46.02645
+BIC(m6) # 95.8716
+
+# normality and equal variance are not heavily violated, we do notice some potential bad leverage points
+par(mfrow=c(2,2))
+plot(m6) 
+
+library(car)
+vif(m6) # engine size > 10 , violates multicollinearity
+
+#remove this variable to 
+m7 <- lm(price ~ brand_tier + carbody +  curbweight + enginelocation + cylinder_level + peakrpm, data = df)
+summary(m7) # R2 adj 92.86%
+
+par(mfrow = c(2,2))
+plot(m7) 
+
+anova(m7,m6) # adding engine size does improve the model but we have to remove it so we do not have high multicollinearity 
+
+vif(m7) #all less than 5, no violation
+
+AIC(m7) # 56.32564
+BIC(m7) #102.8478
+```
+
+We will now check our model for influential points. 
+
+```{r}
+#check for outliers
+outlierTest(m7) #17 and 75 
+
+#check for leverage points
+n <- dim(df)[1] #number of observations
+4/n #0.0195122 is the leverage cutoff point
+influencePlot(m7) # 17 and 75 are bad leverage points
+df[c(17,75),] # index X = 16 and 74 are the bad points in our dataset
+
+
+# take out the bad leverage points
+dfip <- df[-c(17,75),]
+m8 <- lm(price ~ brand_tier + carbody +  curbweight + enginelocation + cylinder_level + peakrpm, data = dfip)
+summary(m8)
+AIC(m8) # -9.261679
+BIC(m8) # 37.1232
+vif(m8) # great, no violation
+```
+
+We will also check model assumptions
+
+```{r}
+par(mfrow=c(2,2))
+plot(m8)
+
+ncvTest(m8) #p-value < 0.05, variance is not constant
+shapiro.test(m8$fitted.values) #p-value < 0.05, predicted values do not follow normal distribution
+```
+
+### Compare the models 
+```{r}
+library(sjPlot)
+library(sjmisc)
+library(sjlabelled)
+
+tab_model(
+  m1, m2, m3, m4,m5,m6,m7,m8,
+  dv.labels = c("Model1", "Model2", "Model3", "Model4","Model5","Model6","Model7","Model8"),
+  show.ci = FALSE,
+  transform = NULL
+)
+```
+
+## Explore Interaction Effects
+
+We did not use an interaction effect in our final model but these are some of the interactions explored in our model process. 
+
+```{r}
+library(car)
+library(effects)
+
+#order the following factors for graphicl purposes
+dfip$cylinder_level  <- factor(dfip$cylinder_level ,
+    levels = c('<four','four', 'five/six', 'eight+'), ordered = TRUE)
+dfip$brand_tier  <- factor(dfip$brand_tier ,
+    levels = c('low','med', 'high'), ordered = TRUE)
+attach(dfip)
+
+
+### brand tier : average MPG ###
+
+# unstandardized
+m.a <- lm(price ~ brand_tier:avg_mpg, CarPrice)
+plot(allEffects(m.a), ask=FALSE, main = "Interaction Effect: Brand Tier and Average MPG")
+
+# standardized
+m.a.s <- lm(price ~ brand_tier:avg_mpg)
+plot(allEffects(m.a.s), ask=FALSE, main = "Interaction Effect: Brand Tier and Average MPG")
+
+summary(avg_mpg) 
+avg_mpgCut <- cut(avg_mpg,br=c(-1.96, -0.14818, 3.54) ,labels=c("below median","above median"),right=FALSE)
+interaction.plot(avg_mpgCut, brand_tier,price)
+
+
+
+
+### brand tier : car volume ###
+
+# unstandardized
+m.b <- lm(price ~ brand_tier:carvolume, data=CarPrice)
+plot(allEffects(m.b), ask=FALSE, main = "Interaction Effect: Brand Tier and Car Volume")
+
+# standardized
+m.b.s <- lm(price ~ brand_tier:carvolume)
+plot(allEffects(m.b.s), ask=FALSE, main = "Interaction Effect: Brand Tier and Car Volume")
+
+summary(carvolume)
+carvolumeCUT <- cut(carvolume,br=c(-2.1, -0.21867, 2.87) ,labels=c("below median","above median"),right=FALSE)
+interaction.plot(carvolumeCUT, brand_tier,price)
+
+
+
+
+
+### brand tier : cylinder number ###
+
+# unstandardized
+m.c <- lm(price ~ brand_tier:cylinder_level, CarPrice)
+plot(allEffects(m.c), ask=FALSE, main = "Interaction Effect: Brand Tier and Cylinder Number")
+
+# standardized
+m.c.s <- lm(price ~ brand_tier:cylinder_level, dfip)
+plot(allEffects(m.c.s), ask=FALSE, main = "Interaction Effect: Brand Tier and Cylinder Number")
+
+interaction.plot(brand_tier,cylinder_level,price)
+interaction.plot(cylinder_level,brand_tier,price)
+
+
+
+
+
+### car body : car volume ###
+
+# unstandardized
+m.d <- lm(price ~ carvolume:carbody, CarPrice)
+plot(allEffects(m.d), ask=FALSE, main = "Interaction Effect: Car Body and Car Volume")
+#all parallel lines
+
+# standardized 
+m.d.s <- lm(price ~ carvolume:carbody)
+plot(allEffects(m.d.s), ask=FALSE, main = "Interaction Effect: Car Body and Car Volume")
+
+interaction.plot(carvolumeCUT, carbody,price)
+```
+## Marginal Model Plots
+```{r}
+library(car)
+mmp(m8, ylab = "price")
+
+# more, comment out for now
+# mmps(m8, layout = c(2,2), ylab = "price")
+```
+
+Our final model (m8) seems to be a pretty good fit for the data because the broken red line that results from regression and the blue LOESS line that is based on moving average both follow the same pattern.
+
+
+## Perform Cross Validation 
+
+We now will run a ten fold CV to check if our model overfits. 
+```{r}
+library(caret)
+
+set.seed(1)
+ten_fold_cv_withBL <- train(price ~ brand_tier + carbody +  curbweight + enginelocation + cylinder_level +  enginesize + peakrpm,
+                     trControl = trainControl(method = "cv", number = 10),
+                     method = "lm",
+                     data = df)
+ten_fold_cv_withBL
+
+
+set.seed(1)
+ten_fold_cv <- train(price ~ brand_tier + carbody +  curbweight + enginelocation + cylinder_level +  enginesize + peakrpm,
+                     trControl = trainControl(method = "cv", number = 10),
+                     method = "lm",
+                     data = dfip)
+ten_fold_cv
+```
+
+We will also do a manual 70-30 CV split for graphical purposes.
+```{r}
+## Cross Validation
+set.seed(1) #70-30 split
+n <- dim(dfip)[1]
+index <- sample(1:n,0.7*n)
+train <- dfip[index,]; train <- train %>% arrange(price)
+test <- dfip[-index,]; test <- test %>% arrange(price)
+
+dim(train) #142 observations to train the model
+dim(test) #61 observations to test the model
+
+
+m8train <- lm(price ~ brand_tier + carbody +  curbweight + enginelocation + cylinder_level +   peakrpm, data = train)
+predict8 <- predict(m8train, newdata=test)
+
+
+par(mfrow=c(1,2))
+plot(train$price, main = "Model 8 Fit on Training Data", ylab = "Training Price")
+lines(m8train$fitted.values, col = "blue")
+
+plot(test$price, main = "Model 8 Fit on Testing Data", ylab = "Testing Price")
+lines(predict8, col = "blue")
+
+```
+
+
+
+
+
+
+######## other code, not used in final presentation ########
+
+# Perform Stepwise Regression
+
+We also performed a stepwise regression to help verify that no more variables need to be added or removed from the final model. 
+```{r}
+# get the formula for model 8 
+f_fit_m8<-formula(m8)
+# create the starting module
+fitstart <- lm(price~1,df)
+summary(fitstart)
+sw_8step <-step(fitstart, direction ="both", scope= f_fit_m8)
+summary(sw_8step)
+
+# stepwise using both directions (forward and backward) selects the same variables as the blockwise regression
+# we can conclude that our final model does not run the risk of using too many variables or overfitting
+```
+
+# Remove Luxury Cars - Blockwise Regression
+
+```{r}
+# view the standardized dataset without the luxury cars
+library(dplyr)
+low_med <- df %>% filter(brand_tier != "high")
+head(low_med) 
+
+# Car Description Model
+m1 <- lm(price ~ brand_tier + carbody + carvolume + curbweight, data = low_med)
+summary(m1) # carvolume not significant
+
+# Remove insignificant carvolume
+m2 <- lm(price ~ brand_tier + carbody +  curbweight, data = low_med) 
+summary(m2) 
+
+par(mfrow=c(2,2))
+plot(m2) 
+
+anova(m2, m1) # this shows we are correct to remove carvolume as when we add it, we don't get a significant increase 
+
+# Car Description + Engine Details Model
+#can not use engine location like the full dataset
+m3 <- lm(price ~ brand_tier + carbody +  curbweight  + cylinder_level + fueltype + enginesize +stroke , data = low_med)
+summary(m3) #stroke, engine size, and fuel type are not significant 
+
+# Remove insignificant variables
+m4 <- lm(price ~ brand_tier + carbody +  curbweight  + cylinder_level  , data = low_med)
+summary(m4)
+
+par(mfrow=c(2,2))
+plot(m4) 
+
+anova(m2, m4, m3) # this shows we are correct to remove those insignificant engine variables in m4 because m3 with them included does not improve the fit
+
+# Car Description + Engine Details Model + Car Performance Model
+m5 <- lm(price ~ brand_tier + carbody +  curbweight + cylinder_level  + avg_mpg + peakrpm, data = low_med)
+summary(m5) #avg_mpg is not significant
+
+# Remove insignificant avg_mpg variable and retest
+m6 <- lm(price ~ brand_tier + carbody +  curbweight + cylinder_level   + peakrpm, data = low_med)
+summary(m6)
+
+anova(m4, m6, m5) # we were correct to remove avg_mpg as it does not improve the fit, peakrpm however does improve the model fit.
+
+# at this point, this is  our final model after reviewing industry literature, dividing variables into categories and performing blockwise regression on those categories
+anova(m6)
+
+
+### Check Assumptions
+#We will now check our model to see if it violates any assumptions such as equal variance of the residuals, linearity, and multicollinearity.
+
+# check different metrics
+AIC(m6) # -36.02589
+BIC(m6) # -0.8424189
+
+# normality and equal variance are not heavily violated, we do notice some potential bad leverage points
+par(mfrow=c(2,2))
+plot(m6) 
+
+library(car)
+vif(m6) # all good 
+
+
+#check for outliers
+outlierTest(m6) #56 and 55
+
+#check for leverage points
+n <- dim(low_med)[1] #number of observations 181
+4/n #0.02209945 is the leverage cutoff point
+influencePlot(m6) # 55 and 56 are bad leverage points
+
+
+# take out the bad leverage points
+low_medip <- low_med[-c(55,56),]
+m7 <- lm(price ~ brand_tier + carbody +  curbweight + cylinder_level   + peakrpm, data = low_medip)
+summary(m7) # R2 87%
+AIC(m7) # -71.77004
+BIC(m7) # -36.7088
+vif(m7) # great, no violation
+
+ncvTest(m7) #p-value < 0.05, variance is not constant
+shapiro.test(m8$fitted.values) #p-value < 0.05, predicted values do not follow normal distribution
+```
+
+R2 adjusted is lower when we do not use luxury vehicles in our modeling. However, we only use 5 variables in our analysis and have very low AIC and BIC values. For the sake of our research question, we will include the luxury cars, as done so in the above final model using blockwise regression.  

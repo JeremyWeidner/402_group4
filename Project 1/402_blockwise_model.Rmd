@@ -148,14 +148,28 @@ plot(m7)
 AIC(m7) #59.30549
 BIC(m7) #115.7967
 # R2 adj:  93.41%
+```
+# m7 without influential point: 
+
+```{r}
+dfip <- df[-17,]
+
+m8 <- lm(price ~ brand_tier + carbody +  curbweight + enginelocation + cylindernumber + peakrpm, data = dfip)
+summary(m8)
+AIC(m8) # 18.71219
+BIC(m8) # 65.16587
+vif(m8) # great
+plot(m8)
+
+```
 
 library(sjPlot)
 library(sjmisc)
 library(sjlabelled)
 
 tab_model(
-  m1, m2, m3, m4,m5,m6,m7,
-  dv.labels = c("Model1", "Model2", "Model3", "Model4","Model5","Model6","Model7"),
+  m1, m2, m3, m4,m5,m6,m7,m8,
+  dv.labels = c("Model1", "Model2", "Model3", "Model4","Model5","Model6","Model7","Model8"),
   show.ci = FALSE,
   transform = NULL
 )
