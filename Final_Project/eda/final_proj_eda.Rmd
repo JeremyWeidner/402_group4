@@ -1,0 +1,53 @@
+---
+title: "402_final_proj_eda"
+author: "Harrison DiStefano"
+date: "11/24/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+```{r load data}
+# Only works in rstudio
+file_directory <- dirname(rstudioapi::getActiveDocumentContext()$path)
+setwd(file_directory)
+hotels <- read.csv("../raw_data/hotel_bookings.csv")
+head(hotels)
+summary(hotels)
+```
+
+```{r correlation plot}
+library(dplyr)
+library(reshape2)
+library(ggplot2)
+
+# Get data into a useable shape
+hotels_numeric <- hotels %>% 
+                    select(where(is.numeric)) %>%
+                    select(-children)  # Children is ordinal
+corr_matrix <- cor(hotels_numeric)
+corr_matrix[upper.tri(corr_matrix)] <- NA  # Get only upper triangle of heatmap
+melted_corr <- melt(corr_matrix, na.rm = TRUE)
+
+# Plot
+heatmap <- ggplot(data = melted_corr, aes(x=Var1, y=Var2, fill=value)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient2(low = "blue", high = "red", mid = "white",
+                       midpoint = 0, limit = c(-1,1), space = "Lab",
+                       name = "Pearson\nCorrelation") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, vjust = .25,
+                                   size = 10, hjust = 1)) + 
+  coord_fixed()
+
+heatmap +
+  theme(
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    panel.border = element_blank()
+  )
+```
+
