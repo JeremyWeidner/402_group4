@@ -81,3 +81,21 @@ ggplot(data = hotels, aes(x=agent)) +
   geom_histogram(stat = "count")
 ```
 
+```{r deposit type}
+# Deposit type by cancellation rate
+ggplot(data = hotels, aes(x=deposit_type, group=is_canceled, fill=factor(is_canceled))) +
+  geom_bar(position = "fill") +
+  ylab("proportion") +
+  labs(fill = "is_canceled")
+```
+
+
+```{r international booking}
+# Assuming the two hotels are in Portugal
+hotels$international_booking <- hotels$country != "PRT"
+
+ggplot(data = hotels, aes(x=international_booking, group=is_canceled, fill=factor(is_canceled))) +
+  geom_bar(position = "fill") +
+  ylab("proportion") +
+  labs(fill = "is_canceled")
+```
