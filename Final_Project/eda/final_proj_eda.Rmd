@@ -66,5 +66,18 @@ ggplot(data = hotels, aes(x=required_car_parking_spaces, group=is_canceled, fill
   labs(fill = "is_canceled")
 ```
 
+```{r agent}
+# TRUE if an agent was used for the booking, FALSE otherwise
+hotels$used_agent <- hotels$agent != "NULL"
 
+# Used agent by cancellation rate
+ggplot(data = hotels, aes(x=used_agent, group=is_canceled, fill=factor(is_canceled))) +
+  geom_bar(position = "fill") +
+  ylab("proportion") +
+  labs(fill = "is_canceled")
+
+# Could possibly compare agents that have a large number of bookings
+ggplot(data = hotels, aes(x=agent)) +
+  geom_histogram(stat = "count")
+```
 
