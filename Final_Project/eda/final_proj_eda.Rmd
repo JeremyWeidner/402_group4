@@ -1,7 +1,7 @@
 ---
 title: "402_final_proj_eda"
 author: "Harrison DiStefano"
-date: "11/24/2020"
+date: "11/29/2020"
 output: html_document
 ---
 
@@ -50,4 +50,21 @@ heatmap +
     panel.border = element_blank()
   )
 ```
+
+```{r required car spaces histogram}
+# Histogram of required car parking spaces
+ggplot(data = hotels, aes(x=required_car_parking_spaces, group=is_canceled, fill=is_canceled)) +
+  geom_histogram(position = "dodge", binwidth = 0.5) +
+  theme(legend.position = "none")
+```
+
+```{r required car spaces proportion}
+# Percent of reservations canceled by required car parking spaces
+ggplot(data = hotels, aes(x=required_car_parking_spaces, group=is_canceled, fill=factor(is_canceled))) +
+  geom_bar(position = "fill") +
+  ylab("proportion") +
+  labs(fill = "is_canceled")
+```
+
+
 
