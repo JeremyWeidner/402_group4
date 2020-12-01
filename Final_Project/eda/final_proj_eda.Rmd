@@ -116,6 +116,13 @@ ggplot(data = hotels, aes(x=customer_type, group=is_canceled, fill=factor(is_can
   ylab("proportion") +
   scale_fill_discrete(name = "Booking Status", labels = c("Not Cancelled", "Cancelled"))
 ```
+```{r Repeated Guest}
+ggplot(data = hotels, aes(x=is_repeated_guest, group=is_canceled, fill=factor(is_canceled))) +
+  geom_bar(position = "fill") +
+  ylab("proportion") +
+  scale_fill_discrete(name = "Booking Status", labels = c("Not Cancelled", "Cancelled"))
+```
+
 
 # Cross-Correlations: 
 
