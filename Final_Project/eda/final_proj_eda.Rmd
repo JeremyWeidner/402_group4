@@ -147,13 +147,72 @@ ggplot(data = hotels, aes(x=assigned_room_type, group=is_canceled, fill=factor(i
 
 
 ```{r ADR}
-#deleted 2 outliers (one irregularly high, the other negative)
+#remove 2 outliers (one irregularly high, the other negative)
 max <- which(hotels$adr == max(hotels$adr))
 min <- which(hotels$adr == min(hotels$adr))
 hotels <- hotels[c(-max,-min),]
 
 #generate a plot
 ggplot(hotels, aes(x=adr)) + geom_histogram(binwidth=5)
+```
+```{r groups by the number of adults, children, and babies into single, couple, friends, a family, and familes}
+#replace NA to 0 for the children variable
+hotels$children[is.na(hotels$children)]<-0
+
+#remove observations when adults is 0 (total 391 observations)
+hotels <- hotels[-c(which(hotels$adults == 0)),]
+
+hotels$group <- "NA"
+hotels[c(which(hotels$adults ==1&hotels$babies==0&hotels$children==0)),36] <- "single"
+hotels[c(which(hotels$adults ==2&hotels$babies==0&hotels$children==0)),36] <- "couple"
+hotels[c(which(hotels$adults >=3&hotels$babies==0&hotels$children==0)),36] <- "friends"
+hotels[c(which(hotels$adults >=3&hotels$babies!=0|hotels$adults >=3&hotels$children!=0)),36] <- "families"
+hotels[c(which(hotels$adults <=2&hotels$babies!=0|hotels$adults <=2&hotels$children!=0)),36] <- "a family"
+
+#create a gr df checking the #
+gr <- hotels %>%  group_by(adults) %>% summarise(babies = babies, children = children)
+x <- c(rep(0,118984))
+gr1 <- aggregate(x ~ adults + babies + children, data = gr, FUN = length)
+#single # = gr1$x[c(1)]
+#couple # = gr1$x[c(2)]
+#friends # = sum(gr1$x[c(3:13)])
+#a family # = sum(gr1$x[c(14:15,18:22,25,26,28:30,32:36)])
+#families # = sum(gr1$x[c(16,17,23,24,27,31)])
+
+#generate a plot
+ggplot(data = hotels, aes(x=group, group=is_canceled, fill=factor(is_canceled))) +
+  geom_bar(position = "fill") +
+  ylab("proportion") +
+  scale_fill_discrete(name = "Booking Status", labels = c("Not Cancelled", "Cancelled"))
+
+#it doesn't look very helpful.
+```
+```{r groups by the number of people}
+hotels$number_of_people <- rowSums(hotels[,10:12])
+
+#There are 17 observations that have more than 5 people on one reservation. Therefore, we will merge the observations that have more than 5.
+hotels$number_of_people[c(which(hotels$number_of_people >= 6))] <- "6+"
+
+#generate a plot
+ggplot(data = hotels, aes(x=number_of_people, group=is_canceled, fill=factor(is_canceled))) +
+  geom_bar(position = "fill") +
+  ylab("proportion") +
+  scale_fill_discrete(name = "Booking Status", labels = c("Not Cancelled", "Cancelled"))
+
+```
+```{r groups by adults vs adults + children vs adults + babies vs adults + babies + children}
+
+hotels$family_combo[c(which(hotels$children==0 & hotels$babies==0))] <- "Adults only"
+hotels$family_combo[c(which(hotels$children!=0 & hotels$babies==0))] <- "Adults and Children"
+hotels$family_combo[c(which(hotels$children==0 & hotels$babies!=0))] <- "Adults and Babies"
+hotels$family_combo[c(which(hotels$children!=0 & hotels$babies!=0))] <- "Adults, Children, and Babies"
+
+#generate a plot
+ggplot(data = hotels, aes(x=family_combo, group=is_canceled, fill=factor(is_canceled))) +
+  geom_bar(position = "fill") +
+  ylab("proportion") +
+  scale_fill_discrete(name = "Booking Status", labels = c("Not Cancelled", "Cancelled"))
+
 ```
 
 
