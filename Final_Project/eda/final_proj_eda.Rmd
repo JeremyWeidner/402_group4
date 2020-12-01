@@ -29,7 +29,7 @@ hotels_numeric <- hotels %>%
                     select(where(is.numeric)) %>%
                     select(-children)  # Children is ordinal
 
-#arrival date of year, week number, and month is not numerical predictors
+#arrival date of year, week number, and month are not numerical predictors
 hotels_numeric1 <- hotels_numeric[,c(-3,-4,-5)]
 
 corr_matrix <- cor(hotels_numeric1)
@@ -91,10 +91,21 @@ ggplot(data = hotels, aes(x=agent)) +
 # merge non refund and refundable into Deposit
 hotels$deposit_type1 <- ifelse(hotels$deposit_type == "Non Refund","Deposit", ifelse(hotels$deposit_type == "Refundable", "Deposit", "No Deposit"))
 
+# deposit vs no deposit
 ggplot(data = hotels, aes(x=deposit_type1, group=is_canceled, fill=factor(is_canceled))) +
   geom_bar(position = "fill") +
   ylab("proportion") +
   scale_fill_discrete(name = "Booking Status", labels = c("Not Cancelled", "Cancelled"))
+
+# generate a plot when there is deposit (non refund vs refundable)
+a <- hotels %>% group_by(deposit_type) %>% summarise(is_canceled = is_canceled)
+refund <- subset(a,!(a$deposit_type == "No Deposit"))
+names(refund)[names(refund) == "deposit_type"] <- "deposit_refunds"
+ggplot(data = refund, aes(x=deposit_refunds, group=is_canceled, fill=factor(is_canceled))) +
+  geom_bar(position = "fill") +
+  ylab("proportion") +
+  scale_fill_discrete(name = "Booking Status", labels = c("Not Cancelled", "Cancelled"))
+
   
 ```
 
@@ -121,9 +132,13 @@ ggplot(data = hotels, aes(x=is_repeated_guest, group=is_canceled, fill=factor(is
   geom_bar(position = "fill") +
   ylab("proportion") +
   scale_fill_discrete(name = "Booking Status", labels = c("Not Cancelled", "Cancelled"))
-
 ```
-
+```{r Assigned Room Type}
+ggplot(data = hotels, aes(x=assigned_room_type, group=is_canceled, fill=factor(is_canceled))) +
+  geom_bar(position = "fill") +
+  ylab("proportion") +
+  scale_fill_discrete(name = "Booking Status", labels = c("Not Cancelled", "Cancelled"))
+```
 
 # Cross-Correlations: 
 
