@@ -28,7 +28,11 @@ library(ggplot2)
 hotels_numeric <- hotels %>% 
                     select(where(is.numeric)) %>%
                     select(-children)  # Children is ordinal
-corr_matrix <- cor(hotels_numeric)
+
+#arrival date of year, week number, and month is not numerical predictors
+hotels_numeric1 <- hotels_numeric[,c(-3,-4,-5)]
+
+corr_matrix <- cor(hotels_numeric1)
 corr_matrix[upper.tri(corr_matrix)] <- NA  # Get only upper triangle of heatmap
 melted_corr <- melt(corr_matrix, na.rm = TRUE)
 
@@ -83,10 +87,15 @@ ggplot(data = hotels, aes(x=agent)) +
 
 ```{r deposit type}
 # Deposit type by cancellation rate
-ggplot(data = hotels, aes(x=deposit_type, group=is_canceled, fill=factor(is_canceled))) +
+
+# merge non refund and refundable into Deposit
+hotels$deposit_type1 <- ifelse(hotels$deposit_type == "Non Refund","Deposit", ifelse(hotels$deposit_type == "Refundable", "Deposit", "No Deposit"))
+
+ggplot(data = hotels, aes(x=deposit_type1, group=is_canceled, fill=factor(is_canceled))) +
   geom_bar(position = "fill") +
   ylab("proportion") +
-  labs(fill = "is_canceled")
+  scale_fill_discrete(name = "Booking Status", labels = c("Not Cancelled", "Cancelled"))
+  
 ```
 
 
@@ -101,6 +110,12 @@ ggplot(data = hotels, aes(x=international_booking, group=is_canceled, fill=facto
 ```
 
 ## Added some stuff: 
+```{r customer type}
+ggplot(data = hotels, aes(x=customer_type, group=is_canceled, fill=factor(is_canceled))) +
+  geom_bar(position = "fill") +
+  ylab("proportion") +
+  scale_fill_discrete(name = "Booking Status", labels = c("Not Cancelled", "Cancelled"))
+```
 
 # Cross-Correlations: 
 
