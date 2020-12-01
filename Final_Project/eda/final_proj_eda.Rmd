@@ -99,3 +99,48 @@ ggplot(data = hotels, aes(x=international_booking, group=is_canceled, fill=facto
   ylab("proportion") +
   labs(fill = "is_canceled")
 ```
+
+## Added some stuff: 
+
+# Cross-Correlations: 
+
+```{r}
+devtools::install_github("laresbernardo/lares")
+library(lares) # colinearity analysis
+options("lares.font" = FALSE)
+hotels$is_canceled <- as.factor(hotels$is_canceled)
+corr_cross(hotels_numeric, 
+           max_pvalue = 0.05,
+           top = 10, 
+           rm.na = TRUE)
+
+corr_var(hotels_numeric, 
+         is_canceled, 
+         top = 5)
+```
+
+
+# Feature Selection: 
+
+```{r}
+library(randomForest)
+library(randomForestExplainer)
+hotels <- na.omit(hotels)
+
+hotels.n <- hotels %>% mutate_if(is.character, is.factor)
+set.seed(1) # for reproducibility 
+train <- sample(1:nrow(hotels.n), nrow(hotels.n)*.7) # doing a 70/30 split on the data
+train.dt <- hotels.n[train,]
+test.dt <- hotels.n[-train,]
+
+rf.dt <- randomForest(is_canceled~., data = train.dt, mtry = 6, importance = TRUE, ntrees = 500, na.action = na.omit)
+
+# importance(rf.dt)
+varImpPlot(rf.dt)
+# Mean Decrease in Gini is the average (mean) of a variable’s total decrease in node impurity, weighted by the proportion of samples reaching that node in each individual decision tree in the random forest. 
+# A higher Mean Decrease in Gini indicates higher variable importance.
+
+pred <- predict(rf.dt, test.dt, type = "response")
+table(pred, test.dt$is_canceled)
+mean(pred != test.dt$is_canceled) # test error rate 
+```
