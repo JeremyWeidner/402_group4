@@ -121,6 +121,7 @@ ggplot(data = hotels, aes(x=is_repeated_guest, group=is_canceled, fill=factor(is
   geom_bar(position = "fill") +
   ylab("proportion") +
   scale_fill_discrete(name = "Booking Status", labels = c("Not Cancelled", "Cancelled"))
+
 ```
 
 
