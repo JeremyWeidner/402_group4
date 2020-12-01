@@ -134,11 +134,28 @@ ggplot(data = hotels, aes(x=is_repeated_guest, group=is_canceled, fill=factor(is
   scale_fill_discrete(name = "Booking Status", labels = c("Not Cancelled", "Cancelled"))
 ```
 ```{r Assigned Room Type}
+#remove observations for P room type and L room type since there are only 13 observations for both 
+hotels <- hotels[-c(which(hotels$assigned_room_type=="P")),]
+hotels <- hotels[-c(which(hotels$assigned_room_type=="L")),]
+
 ggplot(data = hotels, aes(x=assigned_room_type, group=is_canceled, fill=factor(is_canceled))) +
   geom_bar(position = "fill") +
   ylab("proportion") +
   scale_fill_discrete(name = "Booking Status", labels = c("Not Cancelled", "Cancelled"))
 ```
+
+
+
+```{r ADR}
+#deleted 2 outliers (one irregularly high, the other negative)
+max <- which(hotels$adr == max(hotels$adr))
+min <- which(hotels$adr == min(hotels$adr))
+hotels <- hotels[c(-max,-min),]
+
+#generate a plot
+ggplot(hotels, aes(x=adr)) + geom_histogram(binwidth=5)
+```
+
 
 # Cross-Correlations: 
 
