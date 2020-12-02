@@ -62,6 +62,8 @@ hotels$used_agent <- hotels$agent != "NULL"
 # Assuming the two hotels are in Portugal
 hotels$international_booking <- hotels$country != "PRT"
 
+hotels$number_of_people <- rowSums(hotels[,10:12])
+
 
 # merge non refund and refundable into Deposit
 hotels$deposit_type1 <- ifelse(hotels$deposit_type == "Non Refund","Deposit", ifelse(hotels$deposit_type == "Refundable", "Deposit", "No Deposit"))
