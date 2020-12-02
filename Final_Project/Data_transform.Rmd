@@ -1,0 +1,108 @@
+---
+title: "Data_transform"
+author: "Tianyang Liu"
+date: "12/1/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+```{r}
+hotels <- read.csv("hotel_bookings.csv")
+
+# Transformations on observations
+
+#remove observations for P room type and L room type since there are only 13 observations for both 
+hotels <- hotels[-c(which(hotels$assigned_room_type=="P")),]
+hotels <- hotels[-c(which(hotels$assigned_room_type=="L")),]
+
+#remove 2 outliers (one irregularly high, the other negative)
+max <- which(hotels$adr == max(hotels$adr))
+min <- which(hotels$adr == min(hotels$adr))
+negative <- which(hotels$adr < 0)
+hotels <- hotels[c(-max,-min, -negative),]
+
+#replace NA to 0 for the children variable
+hotels$children[is.na(hotels$children)]<-0
+
+# remove oberservations with 0 adults
+hotels <- hotels[-c(which(hotels$adults == 0)),]
+
+
+```
+
+```{r}
+# Transformations on predictors
+
+# TRUE if an agent was used for the booking, FALSE otherwise
+hotels$used_agent <- hotels$agent != "NULL"
+
+# Assuming the two hotels are in Portugal
+hotels$international_booking <- hotels$country != "PRT"
+
+hotels$number_of_people <- rowSums(hotels[,10:12])
+
+
+# merge non refund and refundable into Deposit
+hotels$deposit_type1 <- ifelse(hotels$deposit_type == "Non Refund","Deposit", ifelse(hotels$deposit_type == "Refundable", "Deposit", "No Deposit"))
+
+# family_combo based on the status of the moved-in family
+hotels$family_combo[c(which(hotels$children==0 & hotels$babies==0))] <- "Adults only"
+hotels$family_combo[c(which(hotels$children!=0 & hotels$babies==0))] <- "Adults and Children"
+hotels$family_combo[c(which(hotels$children==0 & hotels$babies!=0))] <- "Adults and Babies"
+hotels$family_combo[c(which(hotels$children!=0 & hotels$babies!=0))] <- "Adults, Children, and Babies"
+
+# Add seasons based on the arrival_date_month
+arrival_date_season <- rep(NA, 118984)
+for (i in seq(1, length(arrival_date_season))) {
+  if(hotels$arrival_date_month[i] %in% c("March", "April", "May")){
+    arrival_date_season[i] <- "Spring"
+  }
+  else if(hotels$arrival_date_month[i] %in% c("June", "July", "August")){
+    arrival_date_season[i] <- "Summer"
+  }
+  else if(hotels$arrival_date_month[i] %in% c("September", "October", "November")){
+    arrival_date_season[i] <- "Fall"
+  }
+  else {
+    arrival_date_season[i] <- "Winter"
+  }
+}
+hotels$arrival_date_season <- factor(arrival_date_season)
+
+# Reassignment
+hotels$reassigned <- !(hotels$reserved_room_type == hotels$assigned_room_type)
+
+# Stay length
+stay_length <- hotels$stays_in_week_nights + hotels$stays_in_weekend_nights
+hotels$Stay_length <- stay_length
+hotels
+
+
+```
+```{r}
+write.csv(hotels,"C:\\Users\\Tianyang Liu\\Desktop\\Applied Statistics\\hotels.csv", row.names = FALSE)
+```
+
