@@ -46,14 +46,16 @@ DAVID
 
 
 ```{r cars}
-library(effects)
-
 # install.packages("effects")
 
-hotels <- read.csv("../raw_data/hotels_mod1.csv")
+library(effects)
+
+
+hotels <- read.csv("hotels.csv")
 head(hotels)
 summary(hotels)
 ```
+
 
 
 
@@ -68,8 +70,67 @@ anova(model_2)
 
 ```
 
+```{r}
+hotels
+```
 
+```{r}
+# Add meal 
+model_3 <- glm(is_canceled ~ arrival_date_season*hotel + lead_time + adults +  babies +  international_booking + Stay_length + previous_cancellations + adr + reassigned + meal, family = binomial(), data = hotels)
+summary(model_3)
+anova(model_2, model_3, test = "Chisq")
+```
 
+```{r}
+# Add market_segment
+model_4 <- glm(is_canceled ~ arrival_date_season*hotel + lead_time + adults +  babies +  international_booking + Stay_length + previous_cancellations + adr + reassigned + meal + market_segment, family = binomial(), data = hotels)
+summary(model_4)
+anova(model_3, model_4, test = "Chisq")
+# Delete this one
+```
+
+```{r}
+# Add deposit_type
+model_5 <- glm(is_canceled ~ arrival_date_season*hotel + lead_time + adults +  babies +  international_booking + Stay_length + previous_cancellations + adr + reassigned + meal + market_segment + deposit_type, family = binomial(), data = hotels)
+summary(model_5)
+anova(model_4, model_5, test = "Chisq")
+# Delete this one
+```
+
+```{r}
+# Let's do some manipulations on days_in_waiting_list
+dim(hotels)
+If_wait <- rep(NA, 118984)
+for (i in c(1:118984)) {
+  if(hotels$days_in_waiting_list[i] == 0){
+    If_wait[i] <- FALSE
+  }
+  else{
+    If_wait[i] <- TRUE
+  }
+}
+hotels$If_wait <- If_wait
+# Add days_in_waiting_list
+model_6 <- glm(is_canceled ~ arrival_date_season*hotel + lead_time + adults +  babies +  international_booking + Stay_length + previous_cancellations + adr + reassigned + meal + market_segment + deposit_type + If_wait, family = binomial(), data = hotels)
+summary(model_6)
+anova(model_5, model_6, test = "Chisq")
+# To be decided......
+```
+
+```{r}
+# Add customer_type
+model_7 <- glm(is_canceled ~ arrival_date_season*hotel + lead_time + adults +  babies +  international_booking + Stay_length + previous_cancellations + adr + reassigned + meal + market_segment + deposit_type + If_wait + customer_type, family = binomial(), data = hotels)
+summary(model_7)
+anova(model_6, model_7, test = "Chisq")
+```
+
+```{r}
+# required_car_parking_spaces
+model_8 <- glm(is_canceled ~ arrival_date_season*hotel + lead_time + adults +  babies +  international_booking + Stay_length + previous_cancellations + adr + reassigned + meal + If_wait + customer_type, family = binomial(), data = hotels)
+summary(model_8)
+anova(model_7, model_8, test = "Chisq")
+# delete this one
+```
 
 # odds ratio
 
@@ -78,7 +139,7 @@ anova(model_2)
 
 round(exp(cbind(Estimate=coef(model_2), confint(model_2))),2)
 
-
+round(exp(cbind(Estimate=coef(model_8), confint(model_8))),2)
 
 ```
 
@@ -103,7 +164,7 @@ plot(allEffects(model_2), ask=FALSE, main = "Interaction Effect: ")
 
 library(car)
 mmp(model_2)
-
+mmp(model_8)
 ```
 
 
@@ -114,7 +175,7 @@ mmp(model_2)
 
 print(paste("Pearson’s X^2", round(sum(residuals(model_2, type="pearson")^2),3)))
 
-
+print(paste("Pearson’s X^2", round(sum(residuals(model_8, type="pearson")^2),3)))
 
 
 ```
