@@ -54,6 +54,8 @@ library(effects)
 hotels <- read.csv("hotels.csv")
 head(hotels)
 summary(hotels)
+hotel_mod2 <- read.csv("hotel_mod2.csv")
+ 
 ```
 
 
@@ -130,6 +132,128 @@ model_8 <- glm(is_canceled ~ arrival_date_season*hotel + lead_time + adults +  b
 summary(model_8)
 anova(model_7, model_8, test = "Chisq")
 # delete this one
+
+```
+
+```{r}
+#After some testing our current model becomes:
+curr_model <- glm(is_canceled ~ arrival_date_season*hotel + lead_time + adults +  babies +  international_booking + Stay_length + previous_cancellations + adr + reassigned + meal + If_wait + customer_type, family = binomial(), data = hotel_mod2)
+```
+
+
+```{r}
+# Analysis on weather predictors
+head(hotel_mod2)
+hist(hotel_mod2$wdir)
+hist(hotel_mod2$temp)
+hist(hotel_mod2$maxt)
+hist(hotel_mod2$visibility) # If add this?
+hist(hotel_mod2$wspd)
+hist(hotel_mod2$cloudcover)# If add this?
+hist(hotel_mod2$mint)
+hist(hotel_mod2$precip) # If add this?
+hist(hotel_mod2$dew)
+hist(hotel_mod2$humidity)
+hist(hotel_mod2$precipcover) # If add this?
+table(hotel_mod2$conditions)
+```
+
+```{r}
+# Start to add weather predictors to our model
+# Add wdir
+curr_model1 <- glm(is_canceled ~ arrival_date_season*hotel + lead_time + adults +  babies +  international_booking + Stay_length + previous_cancellations + adr + reassigned + meal + If_wait + customer_type + wdir, family = binomial(), data = hotel_mod2)
+summary(curr_model1)
+anova(curr_model, curr_model1, test = "Chisq")
+# Delete this one
+```
+
+```{r}
+# Add temp
+curr_model2 <- glm(is_canceled ~ arrival_date_season*hotel + lead_time + adults +  babies +  international_booking + Stay_length + previous_cancellations + adr + reassigned + meal + If_wait + customer_type + temp, family = binomial(), data = hotel_mod2)
+summary(curr_model2)
+anova(curr_model, curr_model2, test = "Chisq")
+```
+
+```{r}
+# Add maxt
+curr_model3 <- glm(is_canceled ~ arrival_date_season*hotel + lead_time + adults +  babies +  international_booking + Stay_length + previous_cancellations + adr + reassigned + meal + If_wait + customer_type + temp + maxt, family = binomial(), data = hotel_mod2)
+summary(curr_model3)
+anova(curr_model2, curr_model3, test = "Chisq")
+# Delete this one
+```
+
+```{r}
+# Add visibility
+curr_model4 <- glm(is_canceled ~ arrival_date_season*hotel + lead_time + adults +  babies +  international_booking + Stay_length + previous_cancellations + adr + reassigned + meal + If_wait + customer_type + temp + visibility, family = binomial(), data = hotel_mod2)
+summary(curr_model4)
+anova(curr_model2, curr_model4, test = "Chisq")
+# Some data is missed, delete this for now
+```
+
+```{r}
+# Add wspd
+curr_model5 <- glm(is_canceled ~ arrival_date_season*hotel + lead_time + adults +  babies +  international_booking + Stay_length + previous_cancellations + adr + reassigned + meal + If_wait + customer_type + temp + wspd, family = binomial(), data = hotel_mod2)
+summary(curr_model5)
+anova(curr_model2, curr_model5, test = "Chisq")
+# Delete this one
+```
+
+```{r}
+# Add cloudcover
+curr_model6 <- glm(is_canceled ~ arrival_date_season*hotel + lead_time + adults +  babies +  international_booking + Stay_length + previous_cancellations + adr + reassigned + meal + If_wait + customer_type + temp + cloudcover, family = binomial(), data = hotel_mod2)
+summary(curr_model6)
+anova(curr_model2, curr_model6, test = "Chisq")
+# Delete this one
+```
+
+```{r}
+# Add mint
+curr_model7 <- glm(is_canceled ~ arrival_date_season*hotel + lead_time + adults +  babies +  international_booking + Stay_length + previous_cancellations + adr + reassigned + meal + If_wait + customer_type + temp + mint, family = binomial(), data = hotel_mod2)
+summary(curr_model7)
+anova(curr_model2, curr_model7, test = "Chisq")
+```
+
+```{r}
+# Add precip
+curr_model8 <- glm(is_canceled ~ arrival_date_season*hotel + lead_time + adults +  babies +  international_booking + Stay_length + previous_cancellations + adr + reassigned + meal + If_wait + customer_type + temp + mint + precip, family = binomial(), data = hotel_mod2)
+summary(curr_model8)
+anova(curr_model7, curr_model8, test = "Chisq")
+# Delete this one
+```
+
+```{r}
+# Add dew
+curr_model9 <- glm(is_canceled ~ arrival_date_season*hotel + lead_time + adults +  babies +  international_booking + Stay_length + previous_cancellations + adr + reassigned + meal + If_wait + customer_type + temp + mint + dew, family = binomial(), data = hotel_mod2)
+summary(curr_model9)
+anova(curr_model7, curr_model9, test = "Chisq")
+# Delete this one
+```
+
+```{r}
+# Add humidity
+curr_model10 <- glm(is_canceled ~ arrival_date_season*hotel + lead_time + adults +  babies +  international_booking + Stay_length + previous_cancellations + adr + reassigned + meal + If_wait + customer_type + temp + mint + humidity, family = binomial(), data = hotel_mod2)
+summary(curr_model10)
+anova(curr_model7, curr_model10, test = "Chisq")
+# Delete this one
+```
+
+```{r}
+# Add precipcover
+curr_model11 <- glm(is_canceled ~ arrival_date_season*hotel + lead_time + adults +  babies +  international_booking + Stay_length + previous_cancellations + adr + reassigned + meal + If_wait + customer_type + temp + mint + precipcover, family = binomial(), data = hotel_mod2)
+summary(curr_model11)
+anova(curr_model7, curr_model11, test = "Chisq")
+# Delete this one
+```
+
+```{r}
+# Add conditions
+curr_model12 <- glm(is_canceled ~ arrival_date_season*hotel + lead_time + adults +  babies +  international_booking + Stay_length + previous_cancellations + adr + reassigned + meal + If_wait + customer_type + temp + mint + conditions, family = binomial(), data = hotel_mod2)
+summary(curr_model12)
+anova(curr_model7, curr_model12, test = "Chisq")
+# Delete this one
+
+# Let's use curr_model7 for now
+used_model <- curr_model7
 ```
 
 # odds ratio
@@ -139,8 +263,9 @@ anova(model_7, model_8, test = "Chisq")
 
 round(exp(cbind(Estimate=coef(model_2), confint(model_2))),2)
 
-round(exp(cbind(Estimate=coef(model_8), confint(model_8))),2)
+# round(exp(cbind(Estimate=coef(model_8), confint(model_8))),2)
 
+round(exp(cbind(Estimate=coef(used_model), confint(model_8))),2)
 ```
 
 # plot interaction effect
@@ -164,7 +289,8 @@ plot(allEffects(model_2), ask=FALSE, main = "Interaction Effect: ")
 
 library(car)
 mmp(model_2)
-mmp(model_8)
+# mmp(model_8)
+mmp(used_model)
 ```
 
 
@@ -177,6 +303,7 @@ print(paste("Pearson’s X^2", round(sum(residuals(model_2, type="pearson")^2),3
 
 print(paste("Pearson’s X^2", round(sum(residuals(model_8, type="pearson")^2),3)))
 
+print(paste("Pearson’s X^2", round(sum(residuals(used_model, type="pearson")^2),3)))
 
 ```
 
