@@ -1,0 +1,772 @@
+---
+title: "Stats 402 Final Project"
+author: "Britney Brown"
+date: "12/12/2020"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Import Dataset
+```{r}
+# read in data
+hotels <- read.csv("hotel_bookings.csv") # 119390 x 32
+head(hotels)
+#summary(hotels)
+hotels.original <- hotels
+
+```
+
+# Data Cleaning / Transformations
+```{r}
+
+########## adr ##########
+summary(hotels$adr)
+hist(hotels$adr)
+
+# remove outliers: 
+#the average price of a room should not be negative, this indicates that the hotel paid the guest
+# remove the irregularly high priced observation over $5000, we believe this is an error
+max <- which(hotels$adr == max(hotels$adr))
+min <- which(hotels$adr == min(hotels$adr))
+negative <- which(hotels$adr < 0)
+hotels <- hotels[c(-max,-min, -negative),]
+
+# much nicer (more reasonable) distribution
+summary(hotels$adr)
+hist(hotels$adr)
+
+
+
+
+########## Number of People ##########
+hotels$number_of_people <- as.numeric(rowSums(hotels[,10:12]))
+summary(hotels$number_of_people)
+# we will keep this variable numeric and turn adults, babies, and children into categorical/binary variables
+
+
+
+
+########## adults ##########
+table(hotels$adults)
+
+# remove observations with 0 adults, these are likely errors or scam
+hotels <- hotels[-c(which(hotels$adults == 0)),]
+
+# we will keep the observations with large groups of adults (company business trips)
+
+#### make numeric variable into a categorical
+hotels$adults.factor <- hotels$adults
+hotels$adults.factor[which(hotels$adults.factor >= 3)] <- "3+"
+hotels$adults.factor <- as.factor(hotels$adults.factor)
+table(hotels$adults.factor) 
+
+
+
+########## babies ##########
+table(hotels$babies)
+
+# remove the outlier, bringing 9 or 10 babies seems too extreme
+toomanybabies <- which(hotels$babies == 9 | hotels$babies == 10)
+hotels <- hotels[-toomanybabies ,]
+
+# make categorical variable into a binary indicator 
+hotels$babies.factor <- as.factor(ifelse(hotels$babies == 0, 0, 1))
+table(hotels$babies.factor)
+
+
+
+########## children ##########
+summary(hotels$children)
+
+#replace NA to 0 
+hotels$children[is.na(hotels$children)]<-0
+
+table(hotels$children)
+# remove the outlier, bringing 10 children seems too extreme
+toomanychildren <- which(hotels$children ==10)
+hotels <- hotels[-toomanychildren ,]
+
+# make categorical variable into a binary indicator 
+hotels$children.factor <- as.factor(ifelse(hotels$children == 0, 0, 1))
+table(hotels$children.factor)
+
+
+
+########## Family Combo ##########
+# create a categorical variable based on the status of the family dynamic
+hotels$family_combo[c(which(hotels$children==0 & hotels$babies==0))] <- "Adults"
+hotels$family_combo[c(which(hotels$children!=0 & hotels$babies==0))] <- "Adults, Children"
+hotels$family_combo[c(which(hotels$children==0 & hotels$babies!=0))] <- "Adults, Babies"
+hotels$family_combo[c(which(hotels$children!=0 & hotels$babies!=0))] <- "Adults, Children, and Babies"
+table(hotels$family_combo)
+
+
+
+
+########## Assigned and Reserved Room Type ##########
+table(hotels$assigned_room_type)
+table(hotels$reserved_room_type)
+
+# remove observations from L room type since there are very few observations for both 
+# note that the P room type was removed when removing the above outliers
+hotels <- hotels[-c(which(hotels$assigned_room_type=="L")),]
+hotels <- hotels[-c(which(hotels$reserved_room_type=="L")),]
+
+# combine these variables into binary indicator of reassignemnt of room type
+hotels$reassigned <- !(hotels$reserved_room_type == hotels$assigned_room_type)
+hotels$reassigned <- as.factor(ifelse(hotels$reassigned == FALSE, 0, 1))
+table(hotels$reassigned)
+
+
+
+########## Arrival Date by Season ##########
+table(hotels$arrival_date_month)
+
+# Add seasons based on the arrival_date_month
+arrival_date_season <- rep(NA, dim(hotels)[1])
+for (i in seq(1, length(arrival_date_season))) {
+  if(hotels$arrival_date_month[i] %in% c("March", "April", "May")){
+    arrival_date_season[i] <- "Spring"
+  }
+  else if(hotels$arrival_date_month[i] %in% c("June", "July", "August")){
+    arrival_date_season[i] <- "Summer"
+  }
+  else if(hotels$arrival_date_month[i] %in% c("September", "October", "November")){
+    arrival_date_season[i] <- "Fall"
+  }
+  else {
+    arrival_date_season[i] <- "Winter"
+  }
+}
+hotels$arrival_date_season <- factor(arrival_date_season)
+table(hotels$arrival_date_season)
+# we will use season rather than month in this analysis
+
+
+
+########## Stay Length ##########
+hotels$stay_length <- hotels$stays_in_week_nights + hotels$stays_in_weekend_nights
+summary(hotels$stay_length)
+hist(hotels$stay_length)
+
+
+
+########## International Booking ##########
+table(hotels$country)
+
+#insert barplot of top 10 countries to show difference
+
+# since both hotels are in Portugal, we create a binary indicator of whether a booking is international or not
+hotels$international_booking <- hotels$country != "PRT"
+hotels$international_booking <- as.factor(ifelse(hotels$international_booking == FALSE, 0, 1))
+table(hotels$international_booking)
+
+
+
+
+########## Travel Agents ############
+
+table(hotels$agent)
+# these represent the ID of travel agencies, wich is not useful in this particular analysis so we will transform this variable into a binary indicator of whether an agent was used for the booking or not
+hotels$used_agent <- hotels$agent != "NULL"
+hotels$used_agent <- as.factor(ifelse(hotels$used_agent == FALSE, 0, 1))
+table(hotels$used_agent)
+
+
+
+########## Company Responsible for Booking ############
+
+table(hotels$company)
+# these represent the ID of companies, wich is not useful in this particular analysis so we will transform this variable into a binary indicator of whether a company was used for the booking or not
+hotels$used_company <- hotels$company != "NULL"
+hotels$used_company <- as.factor(ifelse(hotels$used_company == FALSE, 0, 1))
+table(hotels$used_company)
+
+
+
+
+######### Deposit ##########
+table(hotels$deposit_type)
+
+# merge non refund and refundable into Deposit
+hotels$deposit_type1 <- ifelse(hotels$deposit_type == "Non Refund","Deposit", ifelse(hotels$deposit_type == "Refundable", "Deposit", "No Deposit"))
+
+# create a binary indicator of whether a booking had at least a partial deposit or not
+hotels$deposit <- as.factor(ifelse(hotels$deposit_type1 == "Deposit", 1, 0))
+table(hotels$deposit)
+
+
+
+
+########## Market Segment ##########
+# remove undefined observations
+hotels <- hotels[-c(which(hotels$market_segment == "Undefined")),]
+table(hotels$market_segment)
+
+
+
+
+########## Distribution Channel ##########
+# remove undefined observations
+hotels <- hotels[-c(which(hotels$distribution_channel == "Undefined")),]
+table(hotels$distribution_channel)
+
+
+
+
+########## Parking Spaces ##########
+table(hotels$required_car_parking_spaces)
+# create a binary indicator of whether a booking requests parking or not
+hotels$parking_requests <- as.factor(ifelse(hotels$required_car_parking_spaces == 0, 0, 1))
+table(hotels$parking_requests)
+
+
+
+
+########## Special Requests ##########
+table(hotels$total_of_special_requests)
+# create a binary indicator of whether a booking requests accommodations or not
+hotels$special_requests <- as.factor(ifelse(hotels$total_of_special_requests == 0, 0, 1))
+table(hotels$special_requests)
+
+
+
+
+########## Booking Changes ############
+table(hotels$booking_changes)
+# create a binary indicator of whether a booking requests changes or not
+hotels$reservation_changes <- as.factor(ifelse(hotels$booking_changes == 0, 0, 1))
+table(hotels$reservation_changes)
+
+
+
+########## Previous Booking Cancellations ############
+table(hotels$previous_cancellations)
+table(hotels$previous_bookings_not_canceled)
+
+# create a binary indicator to determine if previously canceled or not
+hotels$previously_cancelled <- as.factor(ifelse(hotels$previous_cancellations == 0, 0, 1))
+table(hotels$previously_cancelled)
+
+
+
+
+########## Days in Waiting List ##########
+hotels$if_wait <- as.factor(ifelse(hotels$days_in_waiting_list == 0, 0, 1))
+table(hotels$if_wait)
+
+```
+
+```{r}
+dim(hotels)[1]/119390 
+#still have 99.65% of original data
+```
+
+### Example code to turn transformed data into new csv file
+```{r}
+# write.csv(hotels,"C:\\Users\\Tianyang Liu\\Desktop\\Applied Statistics\\hotels.csv", row.names = FALSE)
+```
+
+
+
+# EDA
+
+
+## Response Variable
+```{r}
+library(dplyr)
+library(ggplot2)
+
+#response variable
+table(hotels$is_canceled)
+
+#visualize
+hotels.bookings <- hotels %>% group_by(hotel) %>% summarize(counts = n())
+
+ggplot(hotels.bookings, aes(x=hotel, y=counts)) + 
+  geom_bar(stat = "identity") + 
+  geom_text(aes(label=counts), vjust=-1, color="black", size=4) +
+  labs(title = " Booking Requests by Hotel Type",
+       x = "Hotel Type",y = "Number of Bookings") + 
+  theme_classic() 
+
+ggplot(hotels, aes(x=factor(is_canceled), fill = factor(is_canceled), label = scales::percent(prop.table(stat(count))))) + 
+  geom_bar(stat = "count") + 
+  scale_fill_discrete(name = "Booking Status",labels = c("Not Cancelled", "Cancelled")) +
+  geom_text(stat= "count", vjust=2, color="white", size=4) +
+  labs(
+       x = "is_canceled",y = "Frequency") + theme_classic() 
+```
+
+## Categorical Predictors
+
+### Hotel Type
+```{r}
+table1 <- table(hotels$hotel, hotels$is_canceled)
+table1
+45945/sum(table1) #39%
+32994/sum(table1) #28%
+28926/sum(table1) #24%
+11119/sum(table1) #9%
+
+ggplot(data = hotels,
+       aes(x = hotel, y = stat(count), fill = factor(is_canceled))) +
+        #geom_bar() +
+         geom_bar(position = position_dodge()) + theme_classic() +
+  #geom_text(stat = "count", col = "white", vjust = 1, size = 3) +
+  #scale_y_continuous(labels = scales::percent) + # make y labels %
+  labs(title = "                                 Cancellation by Hotel Type",
+       x = "Hotel Type", y = "") +
+  theme_classic() +
+  scale_fill_discrete(name = "Booking Status",labels = c("Not Cancelled", "Cancelled")
+  )
+
+ggplot(data = hotels,
+       aes(x = hotel, y = stat(count), fill = factor(is_canceled))) +
+        geom_bar() + theme_classic() +
+         #geom_bar(position = position_dodge()) + theme_classic() +
+  #geom_text(stat = "count", col = "white", vjust = 1, size = 3) +
+  #scale_y_continuous(labels = scales::percent) + # make y labels %
+  labs(title = "                                 Cancellation by Hotel Type",
+       x = "Hotel Type", y = "") +
+  theme_classic() +
+  scale_fill_discrete(name = "Booking Status",labels = c("Not Cancelled", "Cancelled")
+  )
+```
+
+### Lead Time
+```{r}
+summary(hotels$lead_time[which(hotels$is_canceled == 0)]) #not canceled
+summary(hotels$lead_time[which(hotels$is_canceled == 1)]) #canceled
+
+par(mfrow=c(1,3))
+plot(hotels$lead_time)
+plot(hotels$lead_time[which(hotels$is_canceled == 0)]) #not canceled
+plot(hotels$lead_time[which(hotels$is_canceled == 1)]) #canceled
+
+# cancellation by lead time
+ggplot(data = hotels, 
+       aes(x = lead_time,y = hotel,
+  fill = factor(is_canceled))) + theme_classic() +
+  geom_boxplot(position = position_dodge()) +
+  labs( title = "                        Cancellation By Hotel Type",
+    y = "Hotel Type", x = "Lead Time") +
+  scale_fill_discrete(
+    name = "Booking Status",
+    labels = c( "Not Cancelled","Cancelled")
+  ) 
+## looks like cancellation is more common after a longer period of time
+
+## maybe remove lead times over 400
+length(which(hotels$lead_time > 400))/ length(hotels$lead_time) #1.78%
+```
+
+### Arrival Date (Month)
+```{r}
+hotels$arrival_date_month <- as.factor(hotels$arrival_date_month)
+hotels$arrival_date_month <- factor(hotels$arrival_date_month, levels = month.name)
+
+# Visualize Hotel traffic on Monthly basis
+ggplot(data = hotels, aes(x = arrival_date_month)) +
+  geom_bar() + theme_classic() +
+  labs( title = "                                            Bookings by Arrival Month",
+    x = "Arrival Month", y = "Number of Bookings") +
+  theme(axis.text.x = element_text(size=9, angle=45, vjust = 0.6))
+
+
+
+# Visualize Hotel traffic on Monthly basis
+ggplot(data = hotels, aes(x = arrival_date_month,fill = factor(is_canceled))) +
+  geom_bar() + theme_classic() +
+  labs( title = "                                         Bookings by Arrival Month",
+    x = "Arrival Month", y = "Number of Bookings") +
+  theme(axis.text.x = element_text(size=9, angle=45, vjust = 0.6)) +
+  scale_fill_discrete(
+    name = "Booking Status",
+    labels = c( "Not Cancelled","Cancelled"))
+```
+
+### Arrival Date (Season)
+```{r}
+hotels$arrival_date_season <- factor(hotels$arrival_date_season ,
+    levels = c('Winter','Spring','Summer', 'Fall'),ordered = TRUE)
+
+
+ggplot(data = hotels, aes(x = arrival_date_season,fill = factor(is_canceled))) +
+  geom_bar() + theme_classic() +
+  labs( title = "                               Bookings by Arrival Season",
+    x = "Arrival Season", y = "") +
+  theme(axis.text.x = element_text(size=9, angle=45, vjust = 0.6)) +
+  scale_fill_discrete(
+    name = "Booking Status",
+    labels = c( "Not Cancelled","Cancelled"))
+```
+
+### Reassignment of Room Types
+```{r}
+ggplot(data = hotels, aes(x = reassigned,fill = factor(is_canceled))) +
+  geom_bar(position = position_dodge()) + theme_classic() +
+  labs( x = "Room Reassignment", y = "") +
+  #theme(axis.text.x = element_text(size=9, angle=45, vjust = 0.6)) +
+  scale_fill_discrete(
+    name = "Booking Status",
+    labels = c( "Not Cancelled","Cancelled"))
+
+ggplot(data = hotels.original, aes(x=assigned_room_type, group=is_canceled, fill=factor(is_canceled))) +
+  geom_bar(position = "fill") + theme_classic() +
+  ylab("proportion") + xlab("Assigned Room Type") + 
+  scale_fill_discrete(name = "Booking Status", labels = c("Not Cancelled", "Cancelled"))
+
+ggplot(data = hotels.original, aes(x=reserved_room_type, group=is_canceled, fill=factor(is_canceled))) +
+  geom_bar(position = "fill") + theme_classic() +
+  ylab("proportion") + xlab("Reserved Room Type") + 
+  scale_fill_discrete(name = "Booking Status", labels = c("Not Cancelled", "Cancelled"))
+```
+
+### Previously Canceled Reservations
+```{r}
+ggplot(hotels, aes(x=previously_cancelled, fill = factor(is_canceled), label = scales::percent(prop.table(stat(count))))) + 
+  geom_bar(stat = "count",position = position_dodge() ) + 
+  scale_fill_discrete(name = "Booking Status",labels = c("Not Cancelled", "Cancelled")) +
+  #geom_text(stat= "count", vjust=2, color="white", size=4) +
+  labs( x = "Previous Cancellations",y = "Frequency") + theme_classic() 
+```
+
+### Adults
+```{r}
+ggplot(data = hotels.original, aes(x=adults, group=is_canceled, fill=factor(is_canceled))) +
+  geom_bar(position = "fill") + theme_classic() +
+  ylab("proportion") + xlab("Number of Adults") + 
+  scale_fill_discrete(name = "Booking Status", labels = c("Not Cancelled", "Cancelled"))
+
+ggplot(data = hotels, aes(x=adults.factor, group=is_canceled, fill=factor(is_canceled))) +
+  geom_bar(position = "fill") + theme_classic() +
+  ylab("proportion") + xlab("Number of Adults") + 
+  scale_fill_discrete(name = "Booking Status", labels = c("Not Cancelled", "Cancelled"))
+table(hotels$adults.factor)
+```
+
+### Babies
+```{r}
+ggplot(data = hotels.original, aes(x=babies, group=is_canceled, fill=factor(is_canceled))) +
+  geom_bar(position = "fill") + theme_classic() +
+  ylab("proportion") + xlab("Number of Babies") + 
+  scale_fill_discrete(name = "Booking Status", labels = c("Not Cancelled", "Cancelled"))
+
+ggplot(data = hotels, aes(x=babies.factor, group=is_canceled, fill=factor(is_canceled))) +
+  geom_bar(position = "fill") + theme_classic() +
+  ylab("proportion") + xlab("Number of Babies") + 
+  scale_fill_discrete(name = "Booking Status", labels = c("Not Cancelled", "Cancelled"))
+table(hotels$babies.factor)
+```
+
+### Children
+```{r}
+ggplot(data = hotels.original, aes(x=children, group=is_canceled, fill=factor(is_canceled))) +
+  geom_bar(position = "fill") + theme_classic() +
+  ylab("proportion") + xlab("Number of Children") + 
+  scale_fill_discrete(name = "Booking Status", labels = c("Not Cancelled", "Cancelled"))
+
+ggplot(data = hotels, aes(x=children.factor, group=is_canceled, fill=factor(is_canceled))) +
+  geom_bar(position = "fill") + theme_classic() +
+  ylab("proportion") + xlab("Number of Children") + 
+  scale_fill_discrete(name = "Booking Status", labels = c("Not Cancelled", "Cancelled"))
+table(hotels$children.factor)
+```
+
+
+## Numeric Predictors
+
+### Correlation Matrix
+```{r}
+library(dplyr)
+library(reshape2)
+library(ggplot2)
+# Get data into a useable shape
+hotels_numeric <- hotels %>% 
+                    select(where(is.numeric)) %>%
+                    select(#these are variables we do not want to use as numeric in the analysis
+                            -arrival_date_year,
+                            -arrival_date_week_number, 
+                            -arrival_date_day_of_month,
+                            -stays_in_weekend_nights,
+                            -stays_in_week_nights,
+                            -adults,
+                            -children,
+                            -babies,
+                            -is_repeated_guest
+                            #-previous_cancellations,
+                            #-previous_bookings_not_canceled,
+                            #-booking_changes,
+                            #-required_car_parking_spaces,
+                            #-total_of_special_requests,
+                            #-days_in_waiting_list
+
+                           )  
+corr_matrix <- cor(hotels_numeric)
+corr_matrix[upper.tri(corr_matrix)] <- NA  # Get only upper triangle of heatmap
+melted_corr <- melt(corr_matrix, na.rm = TRUE)
+# Plot
+heatmap <- ggplot(data = melted_corr, aes(x=Var1, y=Var2, fill=value)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient2(low = "blue", high = "red", mid = "white",
+                       midpoint = 0, limit = c(-1,1), space = "Lab",
+                       name = "Pearson\nCorrelation") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1,
+                                   size = 10, hjust = 1)) + 
+  coord_fixed()
+heatmap +
+  theme(
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    panel.border = element_blank()
+  )
+```
+
+### Length of Stay
+```{r}
+ggplot(data = hotels, 
+       aes(x = stay_length,fill = factor(is_canceled))) + theme_classic() +
+  geom_histogram() +
+  labs(y = "Count", x = "Length of Stay") +
+  scale_fill_discrete(
+    name = "Booking Status",
+    labels = c( "Not Cancelled","Cancelled")
+  ) 
+
+ggplot(data = hotels, 
+       aes(x = stay_length,y = hotel,
+  fill = factor(is_canceled))) + theme_classic() +
+  geom_boxplot(position = position_dodge()) +
+  labs(y = "Hotel Type", x = "Length of Stay") +
+  scale_fill_discrete(
+    name = "Booking Status",
+    labels = c( "Not Cancelled","Cancelled")
+  ) 
+```
+
+### ADR
+```{r}
+ggplot(data = hotels, 
+       aes(x = adr,fill = factor(is_canceled))) + theme_classic() +
+  geom_histogram() +
+  labs(y = "Count", x = "ADR (average daily rate)") +
+  scale_fill_discrete(
+    name = "Booking Status",
+    labels = c( "Not Cancelled","Cancelled")
+  ) 
+
+ggplot(data = hotels, 
+       aes(x = adr,y = hotel,
+  fill = factor(is_canceled))) + theme_classic() +
+  geom_boxplot(position = position_dodge()) +
+  labs(y = "Hotel Type", x = "ADR") +
+  scale_fill_discrete(
+    name = "Booking Status",
+    labels = c( "Not Cancelled","Cancelled")
+  ) 
+```
+
+### Days in Waiting List
+```{r}
+ggplot(data = hotels, 
+       aes(x = days_in_waiting_list,fill = factor(is_canceled))) + theme_classic() +
+  geom_histogram() +
+  labs(y = "Count", x = "Days in Waiting List") +
+  scale_fill_discrete(
+    name = "Booking Status",
+    labels = c( "Not Cancelled","Cancelled")
+  ) 
+
+ggplot(data = hotels, 
+       aes(x = days_in_waiting_list,y = hotel,
+  fill = factor(is_canceled))) + theme_classic() +
+  geom_boxplot(position = position_dodge()) +
+  labs(y = "Hotel Type", x = "Days in Waiting List") +
+  scale_fill_discrete(
+    name = "Booking Status",
+    labels = c( "Not Cancelled","Cancelled")
+  ) 
+```
+
+
+### Lead Time
+```{r}
+ggplot(data = hotels, 
+       aes(x = lead_time,fill = factor(is_canceled))) + theme_classic() +
+  geom_histogram() +
+  labs(y = "Count", x = "Lead Time") +
+  scale_fill_discrete(
+    name = "Booking Status",
+    labels = c( "Not Cancelled","Cancelled")
+  ) 
+
+ggplot(data = hotels, 
+       aes(x = lead_time, y = hotel,
+  fill = factor(is_canceled))) + theme_classic() +
+  geom_boxplot(position = position_dodge()) +
+  labs(y = "Hotel Type", x = "Lead Time") +
+  scale_fill_discrete(
+    name = "Booking Status",
+    labels = c( "Not Cancelled","Cancelled"))
+```
+
+
+## Interaction Effects
+
+```{r}
+# Arrival Season by Hotel Type
+interaction.plot(hotels$arrival_date_season, hotels$hotel, hotels$is_canceled)
+interaction.plot(hotels$hotel, hotels$arrival_date_season, hotels$is_canceled)
+
+# Stay Length by Hotel Type
+interaction.plot(hotels$stay_length, hotels$hotel, hotels$is_canceled)
+library(effects)
+m.a <- glm(is_canceled ~ stay_length:hotel, family = binomial(), data = hotels)
+plot(allEffects(m.a), ask=FALSE, main = "Interaction Effect: ")
+```
+
+
+
+# Models
+
+## Generic code to check model fit
+
+```{r}
+model <- glm(response ~ predictors, family = binomial(), data = data)
+
+summary(model) # check for significance
+# take out any variables that are not significant
+
+
+##  Bad Leverage Points
+cutoff <- 4/dim(data)[1]
+
+library(car)
+outlierTest(model)
+# outliers: 
+
+influencePlot(model)
+# high leverage (if > cutoff): 
+# high standardized residuals (if > 2): 
+# therefore observations that are bad leverage points: 
+
+# remove bad leverage points
+data.df <- data[-points,] # replace points with the bad leverage observations
+
+ # rerun models without the bad leverage
+model <- glm(response ~ predictors, family = binomial(), data = data.df)
+
+
+
+## Check for Multicollinearity
+vif(model)
+
+# remove variables > 5 from model
+model <- glm(response ~ updated predictors, family = binomial(), data = data.df)
+
+
+
+## Odds Ratio
+round(exp(cbind(Estimate=coef(model), confint(model))),2)
+
+library(sjPlot)
+plot_model(model) #visualize
+
+
+## Check the Plots
+
+residualPlots(model) #residual
+
+plot(allEffects(model, ask = FALSE)) # fixed and interaction effects
+
+mmp(model) # marginal model plot
+
+
+
+## Check the Model Fit
+
+## pseudo R2
+summ <- summary(model)
+null <- summ$null.deviance
+residual <- summ$deviance
+pseudoR2 <- 1 - residual/null; pseudoR2
+
+# pearson chi square test for goodness of fit
+pearson.chi.square <- round(sum(residuals(model_2a, type="pearson")^2),3); pearson.chi.square
+
+quan95 <- qchisq(0.95, summ$df.residual) #use residual deviance df to determine 95% quantile
+
+quan95 < pearson.chi.square
+# if chi square value is larger than 95% reject the null hypothesis and conclude the logistic model does not fit
+
+
+
+
+## ROC Curve 
+
+# split data into training and testing
+library(caTools)
+split<-sample.split(data$response,SplitRatio=0.7)
+train<-subset(data,split=T) 
+test<-subset(data,split=F)
+
+# use training set for above model
+m.train <- glm(response ~ predictors, family = binomial(), data = train)
+summary(m.train)
+prediction <- predict(m.train, newdata = test, type = "response")
+hist(prediction)
+
+# ROCR 
+library(ROCR)
+pred <- prediction(prediction, test$response)
+acc <- performance(pred, "acc")
+plot(acc)
+# choose a cutoff: 
+
+
+
+## Confusion Matrix
+
+######## I created this function to 
+ConfusionMatrixResults <- function(data,model,cutoff){
+  actual <- data$is_canceled
+  
+  predicted <- rep(0,length(model$fitted.values))
+  for(i in 1: length(predicted)){
+    if(model$fitted.values[i] > cutoff){ 
+      predicted[i] <- 1
+    }
+  }
+
+  table <- table(predicted, actual)
+  table
+
+  noNO <- table[1,1] # predict no, actual no
+  noYES <- table[1,2] # predict no, actual yes- false negative
+  yesNO <- table[2,1] # predict yes, actual no- false positive
+  yesYES <- table[2,2] # predict yes, actual yes
+  total <- sum(table)
+
+  
+  accuracy  <- (noNO + yesYES)/total
+  misclassification <- (noYES + yesNO)/total
+  true.positive <- yesYES/(noYES + yesYES) # sensitivity
+  false.positive <- yesNO/(yesNO + noNO) # sensitivity
+  specificity <- noNO/(yesNO + noNO)
+  precision <- yesYES/(yesYES + yesNO)
+  prevalence <- (noYES + yesYES)/total
+  
+  print(cbind(accuracy,misclassification,true.positive,false.positive,specificity,precision,prevalence))
+
+}
+
+
+ConfusionMatrixResults(data,model,cutoff)
+```
+
