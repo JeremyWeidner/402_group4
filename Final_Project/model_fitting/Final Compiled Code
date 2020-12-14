@@ -1,7 +1,7 @@
 ---
 title: "Stats 402 Final Project"
-author: "Britney Brown"
-date: "12/12/2020"
+author: "Group 4"
+date: "12/13/2020"
 output: html_document
 ---
 
@@ -15,9 +15,8 @@ knitr::opts_chunk$set(echo = TRUE)
 # read in data
 hotels <- read.csv("hotel_bookings.csv") # 119390 x 32
 head(hotels)
-#summary(hotels)
-hotels.original <- hotels
 
+hotels.original <- hotels # for use in EDA
 ```
 
 # Data Cleaning / Transformations
@@ -188,6 +187,14 @@ table(hotels$used_company)
 
 
 
+########## Booking Changes ############
+table(hotels$booking_changes)
+# create a binary indicator of whether a booking requests changes or not
+hotels$reservation_changes <- as.factor(ifelse(hotels$booking_changes == 0, 0, 1))
+table(hotels$reservation_changes)
+
+
+
 
 ######### Deposit ##########
 table(hotels$deposit_type)
@@ -235,12 +242,12 @@ table(hotels$special_requests)
 
 
 
-
-########## Booking Changes ############
-table(hotels$booking_changes)
-# create a binary indicator of whether a booking requests changes or not
-hotels$reservation_changes <- as.factor(ifelse(hotels$booking_changes == 0, 0, 1))
-table(hotels$reservation_changes)
+########## Meal ##########
+table(hotels$meal)
+# combine undefined and SC by definition
+hotels$meal[which(hotels$meal == "Undefined" | hotels$meal == "SC")] <- "No Meal"
+hotels$meal <- factor(hotels$meal ,
+    levels = c('No Meal','BB','HB', 'FB'),ordered = TRUE)
 
 
 
@@ -261,12 +268,13 @@ table(hotels$if_wait)
 
 ```
 
+## Check Percentage of Dataset left for Analysis 
 ```{r}
 dim(hotels)[1]/119390 
 #still have 99.65% of original data
 ```
 
-### Example code to turn transformed data into new csv file
+## Example code to turn transformed data into new csv file
 ```{r}
 # write.csv(hotels,"C:\\Users\\Tianyang Liu\\Desktop\\Applied Statistics\\hotels.csv", row.names = FALSE)
 ```
@@ -338,32 +346,6 @@ ggplot(data = hotels,
   )
 ```
 
-### Lead Time
-```{r}
-summary(hotels$lead_time[which(hotels$is_canceled == 0)]) #not canceled
-summary(hotels$lead_time[which(hotels$is_canceled == 1)]) #canceled
-
-par(mfrow=c(1,3))
-plot(hotels$lead_time)
-plot(hotels$lead_time[which(hotels$is_canceled == 0)]) #not canceled
-plot(hotels$lead_time[which(hotels$is_canceled == 1)]) #canceled
-
-# cancellation by lead time
-ggplot(data = hotels, 
-       aes(x = lead_time,y = hotel,
-  fill = factor(is_canceled))) + theme_classic() +
-  geom_boxplot(position = position_dodge()) +
-  labs( title = "                        Cancellation By Hotel Type",
-    y = "Hotel Type", x = "Lead Time") +
-  scale_fill_discrete(
-    name = "Booking Status",
-    labels = c( "Not Cancelled","Cancelled")
-  ) 
-## looks like cancellation is more common after a longer period of time
-
-## maybe remove lead times over 400
-length(which(hotels$lead_time > 400))/ length(hotels$lead_time) #1.78%
-```
 
 ### Arrival Date (Month)
 ```{r}
@@ -408,6 +390,8 @@ ggplot(data = hotels, aes(x = arrival_date_season,fill = factor(is_canceled))) +
 
 ### Reassignment of Room Types
 ```{r}
+table(hotels$reassigned,hotels$is_canceled)
+
 ggplot(data = hotels, aes(x = reassigned,fill = factor(is_canceled))) +
   geom_bar(position = position_dodge()) + theme_classic() +
   labs( x = "Room Reassignment", y = "") +
@@ -438,44 +422,137 @@ ggplot(hotels, aes(x=previously_cancelled, fill = factor(is_canceled), label = s
 
 ### Adults
 ```{r}
+table(hotels$adults)
 ggplot(data = hotels.original, aes(x=adults, group=is_canceled, fill=factor(is_canceled))) +
   geom_bar(position = "fill") + theme_classic() +
   ylab("proportion") + xlab("Number of Adults") + 
   scale_fill_discrete(name = "Booking Status", labels = c("Not Cancelled", "Cancelled"))
 
+table(hotels$adults.factor)
 ggplot(data = hotels, aes(x=adults.factor, group=is_canceled, fill=factor(is_canceled))) +
   geom_bar(position = "fill") + theme_classic() +
   ylab("proportion") + xlab("Number of Adults") + 
   scale_fill_discrete(name = "Booking Status", labels = c("Not Cancelled", "Cancelled"))
-table(hotels$adults.factor)
+
 ```
 
 ### Babies
 ```{r}
+table(hotels$babies)
 ggplot(data = hotels.original, aes(x=babies, group=is_canceled, fill=factor(is_canceled))) +
   geom_bar(position = "fill") + theme_classic() +
   ylab("proportion") + xlab("Number of Babies") + 
   scale_fill_discrete(name = "Booking Status", labels = c("Not Cancelled", "Cancelled"))
 
+table(hotels$babies.factor)
 ggplot(data = hotels, aes(x=babies.factor, group=is_canceled, fill=factor(is_canceled))) +
   geom_bar(position = "fill") + theme_classic() +
   ylab("proportion") + xlab("Number of Babies") + 
   scale_fill_discrete(name = "Booking Status", labels = c("Not Cancelled", "Cancelled"))
-table(hotels$babies.factor)
+
 ```
 
 ### Children
 ```{r}
+table(hotels$children)
 ggplot(data = hotels.original, aes(x=children, group=is_canceled, fill=factor(is_canceled))) +
   geom_bar(position = "fill") + theme_classic() +
   ylab("proportion") + xlab("Number of Children") + 
   scale_fill_discrete(name = "Booking Status", labels = c("Not Cancelled", "Cancelled"))
 
+table(hotels$children.factor)
 ggplot(data = hotels, aes(x=children.factor, group=is_canceled, fill=factor(is_canceled))) +
   geom_bar(position = "fill") + theme_classic() +
   ylab("proportion") + xlab("Number of Children") + 
   scale_fill_discrete(name = "Booking Status", labels = c("Not Cancelled", "Cancelled"))
-table(hotels$children.factor)
+
+```
+
+### Customer Type
+```{r}
+table(hotels$customer_type)
+
+ggplot(hotels, aes(x=customer_type, fill = factor(is_canceled), label = scales::percent(prop.table(stat(count))))) + 
+  geom_bar(stat = "count" ) + 
+  scale_fill_discrete(name = "Booking Status",labels = c("Not Cancelled", "Cancelled")) +
+  #geom_text(stat= "count", vjust=2, color="white", size=4) +
+  labs( x = "Customer Type",y = "Frequency") + theme_classic() 
+```
+
+### Distribution Channel
+```{r}
+table(hotels$distribution_channel)
+
+ggplot(hotels, aes(x=distribution_channel, fill = factor(is_canceled), label = scales::percent(prop.table(stat(count))))) + 
+  geom_bar(stat = "count") + 
+  scale_fill_discrete(name = "Booking Status",labels = c("Not Cancelled", "Cancelled")) +
+  #geom_text(stat= "count", vjust=2, color="white", size=4) +
+  labs( x = "Distribution Channel",y = "Frequency") + theme_classic() 
+```
+
+### Meal
+```{r}
+table(hotels$meal)
+
+ggplot(hotels, aes(x=meal, fill = factor(is_canceled), label = scales::percent(prop.table(stat(count))))) + geom_bar(stat = "count" ) + 
+  scale_fill_discrete(name = "Booking Status",labels = c("Not Cancelled", "Cancelled")) +
+  #geom_text(stat= "count", vjust=2, color="white", size=4) +
+  labs( x = "Meal",y = "Frequency") + theme_classic() 
+```
+
+### Deposit
+```{r}
+table(hotels$deposit_type1)
+
+ggplot(hotels, aes(x=deposit_type1, fill = factor(is_canceled), label = scales::percent(prop.table(stat(count))))) + 
+  geom_bar(stat = "count") + 
+  scale_fill_discrete(name = "Booking Status",labels = c("Not Cancelled", "Cancelled")) +
+  #geom_text(stat= "count", vjust=2, color="white", size=4) +
+  labs( x = "Deposit",y = "Frequency") + theme_classic() 
+```
+
+### Repeated Guest
+```{r}
+table(hotels$is_repeated_guest)
+
+ggplot(hotels, aes(x=is_repeated_guest, fill = factor(is_canceled), label = scales::percent(prop.table(stat(count))))) + 
+  geom_bar(stat = "count") + 
+  scale_fill_discrete(name = "Booking Status",labels = c("Not Cancelled", "Cancelled")) +
+  #geom_text(stat= "count", vjust=2, color="white", size=4) +
+  labs( x = "Repeated Guest",y = "Frequency") + theme_classic() 
+```
+
+### Reservation Changes
+```{r}
+table(hotels$reservation_changes)
+
+ggplot(hotels, aes(x=reservation_changes, fill = factor(is_canceled), label = scales::percent(prop.table(stat(count))))) + 
+  geom_bar(stat = "count") + 
+  scale_fill_discrete(name = "Booking Status",labels = c("Not Cancelled", "Cancelled")) +
+  #geom_text(stat= "count", vjust=2, color="white", size=4) +
+  labs( x = "Reservation Changes",y = "Frequency") + theme_classic() 
+```
+
+### If Wait
+```{r}
+table(hotels$if_wait)
+
+ggplot(hotels, aes(x=if_wait, fill = factor(is_canceled), label = scales::percent(prop.table(stat(count))))) + 
+  geom_bar(stat = "count") + 
+  scale_fill_discrete(name = "Booking Status",labels = c("Not Cancelled", "Cancelled")) +
+  #geom_text(stat= "count", vjust=2, color="white", size=4) +
+  labs( x = "Spent Time on Waiting List",y = "Frequency") + theme_classic() 
+```
+
+### Use of Travel Agent
+```{r}
+table(hotels$used_agent, hotels$is_canceled)
+
+ggplot(hotels, aes(x=used_agent, fill = factor(is_canceled), label = scales::percent(prop.table(stat(count))))) + 
+  geom_bar(stat = "count", position = position_dodge() ) + 
+  scale_fill_discrete(name = "Booking Status",labels = c("Not Cancelled", "Cancelled")) +
+  #geom_text(stat= "count", vjust=2, color="white", size=4) +
+  labs( x = "Use of Travel Agent",y = "Frequency") + theme_classic() 
 ```
 
 
@@ -498,13 +575,14 @@ hotels_numeric <- hotels %>%
                             -adults,
                             -children,
                             -babies,
-                            -is_repeated_guest
-                            #-previous_cancellations,
+                            -is_repeated_guest,
+                            -previous_cancellations,
                             #-previous_bookings_not_canceled,
-                            #-booking_changes,
-                            #-required_car_parking_spaces,
+                            -required_car_parking_spaces,
                             #-total_of_special_requests,
-                            #-days_in_waiting_list
+                            -booking_changes,
+                            -number_of_people,
+                            -days_in_waiting_list
 
                            )  
 corr_matrix <- cor(hotels_numeric)
@@ -594,9 +672,29 @@ ggplot(data = hotels,
   ) 
 ```
 
-
 ### Lead Time
 ```{r}
+summary(hotels$lead_time[which(hotels$is_canceled == 0)]) #not canceled
+summary(hotels$lead_time[which(hotels$is_canceled == 1)]) #canceled
+
+par(mfrow=c(1,3))
+plot(hotels$lead_time)
+plot(hotels$lead_time[which(hotels$is_canceled == 0)]) #not canceled
+plot(hotels$lead_time[which(hotels$is_canceled == 1)]) #canceled
+
+# cancellation by lead time
+ggplot(data = hotels, 
+       aes(x = lead_time,y = hotel,
+  fill = factor(is_canceled))) + theme_classic() +
+  geom_boxplot(position = position_dodge()) +
+  labs( title = "Cancellation By Hotel Type",
+    y = "Hotel Type", x = "Lead Time") +
+  scale_fill_discrete(
+    name = "Booking Status",
+    labels = c( "Not Cancelled","Cancelled")
+  ) 
+## looks like cancellation is more common after a longer period of time
+
 ggplot(data = hotels, 
        aes(x = lead_time,fill = factor(is_canceled))) + theme_classic() +
   geom_histogram() +
@@ -616,15 +714,60 @@ ggplot(data = hotels,
     labels = c( "Not Cancelled","Cancelled"))
 ```
 
+### Previous Bookings Not Canceled
+```{r}
+
+ggplot(data = hotels, 
+       aes(x = previous_bookings_not_canceled,fill = factor(is_canceled))) + theme_classic() +
+  geom_histogram() +
+  labs(y = "Count", x = "Previous Bookings Not Canceled") +
+  scale_fill_discrete(
+    name = "Booking Status",
+    labels = c( "Not Cancelled","Cancelled")
+  ) 
+
+ggplot(data = hotels, 
+       aes(x = previous_bookings_not_canceled, y = hotel,
+  fill = factor(is_canceled))) + theme_classic() +
+  geom_boxplot(position = position_dodge()) +
+  labs(y = "Hotel Type", x = "Previous Bookings Not Canceled") +
+  scale_fill_discrete(
+    name = "Booking Status",
+    labels = c( "Not Cancelled","Cancelled"))
+```
+
+### Total of Special Requests
+```{r}
+
+ggplot(data = hotels, 
+       aes(x = total_of_special_requests,fill = factor(is_canceled))) + theme_classic() +
+  geom_histogram() +
+  labs(y = "Count", x = "Total of Special Requests") +
+  scale_fill_discrete(
+    name = "Booking Status",
+    labels = c( "Not Cancelled","Cancelled")
+  ) 
+
+ggplot(data = hotels, 
+       aes(x = total_of_special_requests, y = hotel,
+  fill = factor(is_canceled))) + theme_classic() +
+  geom_boxplot(position = position_dodge()) +
+  labs(y = "Hotel Type", x = "Total of Special Requests") +
+  scale_fill_discrete(
+    name = "Booking Status",
+    labels = c( "Not Cancelled","Cancelled"))
+```
+
+
 
 ## Interaction Effects
 
 ```{r}
 # Arrival Season by Hotel Type
-interaction.plot(hotels$arrival_date_season, hotels$hotel, hotels$is_canceled)
+interaction.plot(hotels$arrival_date_season, hotels$hotel, hotels$is_canceled, xlab = "Arrival Date (Season)", ylab = "is_canceled")
 interaction.plot(hotels$hotel, hotels$arrival_date_season, hotels$is_canceled)
 
-# Stay Length by Hotel Type
+# Stay Length by Hotel Type (we do not use this one in the final models)
 interaction.plot(hotels$stay_length, hotels$hotel, hotels$is_canceled)
 library(effects)
 m.a <- glm(is_canceled ~ stay_length:hotel, family = binomial(), data = hotels)
@@ -633,10 +776,9 @@ plot(allEffects(m.a), ask=FALSE, main = "Interaction Effect: ")
 
 
 
-# Models
+# Initial Models
 
-## Generic code to check model fit
-
+## Generic code/process used to check model fit
 ```{r}
 model <- glm(response ~ predictors, family = binomial(), data = data)
 
@@ -655,13 +797,13 @@ influencePlot(model)
 # high leverage (if > cutoff): 
 # high standardized residuals (if > 2): 
 # therefore observations that are bad leverage points: 
+points <- c()
 
 # remove bad leverage points
 data.df <- data[-points,] # replace points with the bad leverage observations
 
- # rerun models without the bad leverage
+# rerun models without the bad leverage
 model <- glm(response ~ predictors, family = binomial(), data = data.df)
-
 
 
 ## Check for Multicollinearity
@@ -671,8 +813,7 @@ vif(model)
 model <- glm(response ~ updated predictors, family = binomial(), data = data.df)
 
 
-
-## Odds Ratio
+## Odds Ratios
 round(exp(cbind(Estimate=coef(model), confint(model))),2)
 
 library(sjPlot)
@@ -681,30 +822,28 @@ plot_model(model) #visualize
 
 ## Check the Plots
 
-residualPlots(model) #residual
+residualPlots(model) #residual plots, computationally expensive
 
 plot(allEffects(model, ask = FALSE)) # fixed and interaction effects
 
 mmp(model) # marginal model plot
 
 
-
 ## Check the Model Fit
 
-## pseudo R2
+# pseudo R2
 summ <- summary(model)
 null <- summ$null.deviance
 residual <- summ$deviance
 pseudoR2 <- 1 - residual/null; pseudoR2
 
 # pearson chi square test for goodness of fit
-pearson.chi.square <- round(sum(residuals(model_2a, type="pearson")^2),3); pearson.chi.square
+pearson.chi.square <- round(sum(residuals(model, type="pearson")^2),3); pearson.chi.square
 
 quan95 <- qchisq(0.95, summ$df.residual) #use residual deviance df to determine 95% quantile
 
 quan95 < pearson.chi.square
 # if chi square value is larger than 95% reject the null hypothesis and conclude the logistic model does not fit
-
 
 
 
@@ -724,7 +863,7 @@ hist(prediction)
 
 # ROCR 
 library(ROCR)
-pred <- prediction(prediction, test$response)
+pred <- prediction(prediction, test$is_canceled)
 acc <- performance(pred, "acc")
 plot(acc)
 # choose a cutoff: 
@@ -733,13 +872,13 @@ plot(acc)
 
 ## Confusion Matrix
 
-######## I created this function to 
+######## this function will calculate results from the confusion matrix
 ConfusionMatrixResults <- function(data,model,cutoff){
   actual <- data$is_canceled
   
   predicted <- rep(0,length(model$fitted.values))
   for(i in 1: length(predicted)){
-    if(model$fitted.values[i] > cutoff){ 
+    if(model$fitted.values[i] > cutoff){
       predicted[i] <- 1
     }
   }
@@ -753,7 +892,7 @@ ConfusionMatrixResults <- function(data,model,cutoff){
   yesYES <- table[2,2] # predict yes, actual yes
   total <- sum(table)
 
-  
+  cutoff <- cutoff
   accuracy  <- (noNO + yesYES)/total
   misclassification <- (noYES + yesNO)/total
   true.positive <- yesYES/(noYES + yesYES) # sensitivity
@@ -762,11 +901,1002 @@ ConfusionMatrixResults <- function(data,model,cutoff){
   precision <- yesYES/(yesYES + yesNO)
   prevalence <- (noYES + yesYES)/total
   
-  print(cbind(accuracy,misclassification,true.positive,false.positive,specificity,precision,prevalence))
+  print(cbind(cutoff,accuracy,misclassification,true.positive,false.positive,specificity,precision,prevalence))
 
 }
-
 
 ConfusionMatrixResults(data,model,cutoff)
 ```
 
+## Model 1 - use initial variables of interest (milestone 2)
+```{r}
+#model_1 <- glm(is_canceled ~ lead_time + arrival_date_month + adults.factor + children.factor + babies.factor + country + previous_cancellations + hotel + adr, family = binomial(), data = hotels) #takes forever to run
+#summary(model_1) 
+
+# taking out country and children because they're not significant
+# use arrival date season and not month
+# add in interaction between the season and type of hotel
+model_2 <- glm(is_canceled ~ arrival_date_season*hotel + lead_time + adults.factor +  babies.factor +  international_booking + stay_length + previous_cancellations + adr + reassigned, family = binomial(), data = hotels)
+summary(model_2) # all variables significant
+
+
+##  Bad Leverage Points
+cutoff <- 4/dim(hotels)[1]
+
+library(car)
+outlierTest(model_2)
+# outliers: 77340
+
+influencePlot(model_2)
+# high leverage (if > cutoff): 14038, 14039, 80052
+# high standardized residuals (if > 2): 77340, 80034, 80052
+# therefore observations that are bad leverage points: 80052
+points <- c(80052)
+
+# remove bad leverage points
+hotels.df <- hotels[-points,] # replace points with the bad leverage observations
+
+ # rerun models without the bad leverage
+model_2 <- glm(is_canceled ~ arrival_date_season*hotel + lead_time + adults.factor +  babies.factor +  international_booking + stay_length + previous_cancellations + adr + reassigned, family = binomial(), data = hotels.df)
+summary(model_2) # all variables significant
+
+
+
+## Check for Multicollinearity
+vif(model_2)
+#only interaction > 5, might deal with later
+
+
+## Odds Ratio
+round(exp(cbind(Estimate=coef(model_2), confint(model_2))),2)
+
+library(sjPlot)
+plot_model(model_2) #visualize
+
+
+## Check the Plots
+
+#residualPlots(model_2) #residual
+
+#plot(allEffects(model_2, ask = FALSE)) # fixed and interaction effects
+
+mmp(model_2) # marginal model plot
+
+
+
+## Check the Model Fit
+
+## pseudo R2
+summ <- summary(model_2)
+null <- summ$null.deviance
+residual <- summ$deviance
+pseudoR2 <- 1 - residual/null; pseudoR2
+
+# pearson chi square test for goodness of fit
+pearson.chi.square <- round(sum(residuals(model_2, type="pearson")^2),3); pearson.chi.square
+
+quan95 <- qchisq(0.95, summ$df.residual) #use residual deviance df to determine 95% quantile
+
+quan95 < pearson.chi.square
+# if chi square value is larger than 95% reject the null hypothesis and conclude the logistic model does not fit
+
+
+
+
+## ROC Curve 
+
+# split data into training and testing
+library(caTools)
+split<-sample.split(hotels.df$is_canceled,SplitRatio=0.7)
+train<-subset(hotels.df,split=T) 
+test<-subset(hotels.df,split=F)
+
+# use training set for above model
+m.train <- glm(is_canceled ~ arrival_date_season*hotel + lead_time + adults.factor +  babies.factor +  international_booking + stay_length + previous_cancellations + adr + reassigned, family = binomial(), data = train)
+summary(m.train)
+prediction <- predict(m.train, newdata = test, type = "response")
+hist(prediction)
+
+# ROCR 
+library(ROCR)
+pred <- prediction(prediction, test$is_canceled)
+acc <- performance(pred, "acc")
+plot(acc)
+# choose a cutoff: 0.4, 0.5, 0.6
+
+
+
+## Confusion Matrix
+ConfusionMatrixResults(hotels.df,model_2,0.4)
+ConfusionMatrixResults(hotels.df,model_2,0.5)
+ConfusionMatrixResults(hotels.df,model_2,0.6)
+```
+
+
+## Model 2 - add in more variables to Model 1
+```{r}
+# Add meal 
+model_3 <- glm(is_canceled ~ arrival_date_season*hotel + lead_time + adults.factor +  babies.factor  +  international_booking + stay_length + previous_cancellations + adr + reassigned + meal, family = binomial(), data = hotels.df)
+summary(model_3)
+anova(model_2a, model_3, test = "Chisq")
+# improves by 1346.5
+
+# Add market_segment
+model_4 <- glm(is_canceled ~ arrival_date_season*hotel + lead_time + adults.factor +  babies.factor  +  international_booking + stay_length + previous_cancellations + adr + reassigned + meal + market_segment, family = binomial(), data = hotels.df)
+summary(model_4)
+anova(model_3, model_4, test = "Chisq")
+# improves by 4548.2
+
+# Add deposit_type 1 (binary indicator)
+model_5 <- glm(is_canceled ~ arrival_date_season*hotel + lead_time + adults.factor +  babies.factor  +  international_booking + stay_length + previous_cancellations + adr + reassigned + meal + market_segment + deposit_type1, family = binomial(), data = hotels.df)
+summary(model_5)
+anova(model_4, model_5, test = "Chisq")
+# improves by 10,478
+
+# Add binomial indicator of days_in_waiting_list
+model_6 <- glm(is_canceled ~ arrival_date_season*hotel + lead_time + adults.factor +  babies.factor  +  international_booking + stay_length + previous_cancellations + adr + reassigned + meal + market_segment + deposit_type1 + if_wait, family = binomial(), data = hotels.df)
+summary(model_6)
+anova(model_5, model_6, test = "Chisq")
+
+# Add customer_type
+model_7 <- glm(is_canceled ~ arrival_date_season*hotel + lead_time + adults.factor +  babies.factor  +  international_booking + stay_length + previous_cancellations + adr + reassigned + meal + market_segment + deposit_type1 + if_wait +customer_type, family = binomial(), data = hotels.df)
+summary(model_7)
+anova(model_6, model_7, test = "Chisq")
+# improves 849
+
+# Add binomial indicator of required_car_parking_spaces
+model_8 <- glm(is_canceled ~ arrival_date_season*hotel + lead_time + adults.factor +  babies.factor  +  international_booking + stay_length + previous_cancellations + adr + reassigned + meal + market_segment + deposit_type1 + if_wait + customer_type + parking_requests, family = binomial(), data = hotels.df)
+summary(model_8)
+anova(model_7, model_8, test = "Chisq")
+# improves by 5026
+
+
+
+###### from above analysis, choose to add in  meal, if_wait, and customer_type
+
+curr_model <- glm(is_canceled ~ arrival_date_season*hotel + lead_time + adults.factor +  babies.factor +  international_booking + stay_length + previous_cancellations + adr + reassigned + meal + if_wait + customer_type, family = binomial(), data = hotels.df)
+summary(curr_model) # all variables significant
+
+
+##  Bad Leverage Points
+cutoff <- 4/dim(hotels.df)[1] #3.362192e-05
+
+library(car)
+outlierTest(curr_model)
+# outliers: 77340
+
+influencePlot(curr_model)
+# high leverage (if > cutoff): 14039, 89364
+# high standardized residuals (if > 2): 77340, 80052,80055
+# therefore observations that are bad leverage points: no issues
+
+
+## Check for Multicollinearity
+vif(curr_model)
+
+# hotel and arrival_date_season:hotel are > 5
+
+# remove fixed hotel from model
+curr_model <- glm(is_canceled ~ arrival_date_season:hotel + arrival_date_season + lead_time + adults.factor +  babies.factor +  international_booking + stay_length + previous_cancellations + adr + reassigned + meal + if_wait + customer_type, family = binomial(), data = hotels.df)
+vif(curr_model) # all good now
+
+
+
+## Odds Ratio
+round(exp(cbind(Estimate=coef(curr_model), confint(curr_model))),2)
+
+library(sjPlot)
+plot_model(curr_model) #visualize
+
+
+## Check the Plots
+
+#residualPlots(curr_model) #residual
+
+#plot(allEffects(curr_model, ask = FALSE)) # fixed and interaction effects
+
+mmp(curr_model) # marginal model plot
+
+
+
+## Check the Model Fit
+
+## pseudo R2
+summ <- summary(curr_model)
+null <- summ$null.deviance
+residual <- summ$deviance
+pseudoR2 <- 1 - residual/null; pseudoR2
+
+# pearson chi square test for goodness of fit
+pearson.chi.square <- round(sum(residuals(curr_model, type="pearson")^2),3); pearson.chi.square
+
+quan95 <- qchisq(0.95, summ$df.residual) #use residual deviance df to determine 95% quantile
+
+quan95 < pearson.chi.square
+# if chi square value is larger than 95% reject the null hypothesis and conclude the logistic model does not fit
+
+
+## ROC Curve 
+
+
+# use training set for above model
+m.train <- glm(is_canceled ~ arrival_date_season:hotel + arrival_date_season + lead_time + adults.factor +  babies.factor +  international_booking + stay_length + previous_cancellations + adr + reassigned + meal + if_wait + customer_type, family = binomial(), data = train)
+summary(m.train)
+prediction <- predict(m.train, newdata = test, type = "response")
+hist(prediction)
+
+# ROCR 
+library(ROCR)
+pred <- prediction(prediction, test$is_canceled)
+acc <- performance(pred, "acc")
+plot(acc)
+# choose a cutoff: 0.5, 0.55, 0.6
+
+
+
+## Confusion Matrix
+ConfusionMatrixResults(hotels.df, curr_model, 0.5)
+ConfusionMatrixResults(hotels.df, curr_model, 0.55)
+ConfusionMatrixResults(hotels.df, curr_model, 0.6)
+```
+
+
+## Model 3 - start with all variables and use stepwise and other methods to reduce variables
+```{r}
+#head(hotels.df)
+
+
+model_full <- glm(is_canceled ~ arrival_date_season*hotel + lead_time + adults.factor +  babies.factor +  children.factor  + number_of_people + family_combo + international_booking + stay_length + previous_cancellations + previous_bookings_not_canceled + previously_cancelled + adr + reassigned + meal + market_segment + deposit_type1 + if_wait + customer_type  + distribution_channel + is_repeated_guest   + reservation_changes + days_in_waiting_list + used_agent + used_company + parking_requests + total_of_special_requests , family = binomial(), data = hotels.df)
+summary(model_full)
+
+# we use a backwards stepwise regression to take out some variables
+library(MASS)
+# step.model <-stepAIC(model_full, direction ="backward")
+
+# this is the model the above function produces
+step.model <- glm(is_canceled ~ arrival_date_season + hotel + lead_time + 
+    adults.factor + number_of_people + family_combo + international_booking + 
+    stay_length + previous_bookings_not_canceled + previously_cancelled + 
+    adr + reassigned + meal + market_segment + deposit_type1 + 
+    if_wait + customer_type + distribution_channel + is_repeated_guest + 
+    reservation_changes + used_agent + used_company + 
+    parking_requests + total_of_special_requests + arrival_date_season:hotel, 
+    family = binomial(), data = hotels.df)
+summary(step.model)
+
+# remove insignificant parking requests and family combo
+reduced.model1 <- glm(is_canceled ~ arrival_date_season + hotel + lead_time + adults.factor + number_of_people + 
+                        international_booking + stay_length + previous_bookings_not_canceled +
+                        previously_cancelled + adr + reassigned + meal + market_segment + deposit_type1 +
+                        if_wait + customer_type + distribution_channel + is_repeated_guest + 
+                        reservation_changes + used_agent + used_company  + 
+                        total_of_special_requests + arrival_date_season:hotel, 
+                      family = binomial(), data = hotels.df)
+summary(reduced.model1)
+vif(reduced.model1)
+
+# remove market segment
+reduced.model2 <- glm(is_canceled ~ arrival_date_season + hotel + lead_time + adults.factor + number_of_people + 
+                        international_booking + stay_length + previous_bookings_not_canceled +
+                        previously_cancelled + adr + reassigned + meal + deposit_type1 +
+                        if_wait + customer_type + distribution_channel + is_repeated_guest + 
+                        reservation_changes + used_agent + used_company  + 
+                        total_of_special_requests + arrival_date_season:hotel, 
+                      family = binomial(), data = hotels.df)
+vif(reduced.model2)
+
+# keep the interaction but remove fixed hotel effect
+reduced.model3 <- glm(is_canceled ~ arrival_date_season  + lead_time + adults.factor + number_of_people + 
+                        international_booking + stay_length + previous_bookings_not_canceled +
+                        previously_cancelled + adr + reassigned + meal + deposit_type1 +
+                        if_wait + customer_type + distribution_channel + is_repeated_guest + 
+                        reservation_changes + used_agent + used_company  + 
+                        total_of_special_requests + arrival_date_season:hotel, 
+                      family = binomial(), data = hotels.df)
+vif(reduced.model3)
+summary(reduced.model3)
+
+# look at variables and remove number of people (similar to adult.factor variable)
+reduced.model4 <- glm(is_canceled ~ arrival_date_season  + lead_time + adults.factor  + 
+                        international_booking + stay_length + previous_bookings_not_canceled +
+                        previously_cancelled + adr + reassigned + meal + deposit_type1 +
+                        if_wait + customer_type + distribution_channel + is_repeated_guest + 
+                        reservation_changes + used_agent + used_company  + 
+                        total_of_special_requests + arrival_date_season:hotel, 
+                      family = binomial(), data = hotels.df)
+summary(reduced.model4)
+vif(reduced.model4)
+# the interaction is slightly above 5 but we will allow this 
+
+
+##  Bad Leverage Points
+cutoff <- 4/dim(hotels.df)[1]
+
+library(car)
+outlierTest(reduced.model4)
+# outliers: 76717
+
+influencePlot(reduced.model4)
+# high leverage (if > cutoff): 76706, 80056, 80057
+# high standardized residuals (if > 2): 14026, 76706, 76717
+# therefore observations that are bad leverage points: 76706
+points <- c(76706)
+
+# remove bad leverage points
+hotels.df <- hotels.df[-points,] # replace points with the bad leverage observations
+
+ # rerun models without the bad leverage
+reduced.model4 <- glm(is_canceled ~ arrival_date_season  + lead_time + adults.factor  + 
+                        international_booking + stay_length + previous_bookings_not_canceled +
+                        previously_cancelled + adr + reassigned + meal + deposit_type1 +
+                        if_wait + customer_type + distribution_channel + is_repeated_guest + 
+                        reservation_changes + used_agent + used_company  + 
+                        total_of_special_requests + arrival_date_season:hotel, 
+                      family = binomial(), data = hotels.df)
+
+## Check for Multicollinearity
+vif(reduced.model4)
+
+## Odds Ratio
+round(exp(cbind(Estimate=coef(reduced.model4), confint(reduced.model4))),2)
+
+library(sjPlot)
+plot_model(reduced.model4) #visualize
+
+
+## Check the Plots
+
+#residualPlots(reduced.model4) #residual
+
+#plot(allEffects(reduced.model4, ask = FALSE)) # fixed and interaction effects
+
+mmp(reduced.model4) # marginal model plot
+
+
+
+## Check the Model Fit
+
+## pseudo R2
+summ <- summary(reduced.model4)
+null <- summ$null.deviance
+residual <- summ$deviance
+pseudoR2 <- 1 - residual/null; pseudoR2
+
+# pearson chi square test for goodness of fit
+pearson.chi.square <- round(sum(residuals(reduced.model4, type="pearson")^2),3); pearson.chi.square
+
+quan95 <- qchisq(0.95, summ$df.residual) #use residual deviance df to determine 95% quantile
+
+quan95 < pearson.chi.square
+# if chi square value is larger than 95% reject the null hypothesis and conclude the logistic model does not fit
+
+
+
+## ROC Curve 
+
+# split data into training and testing
+library(caTools)
+split<-sample.split(hotels.df$is_canceled,SplitRatio=0.7)
+train<-subset(hotels.df,split=T) 
+test<-subset(hotels.df,split=F)
+
+# use training set for above model
+m.train <- glm(is_canceled ~ arrival_date_season  + lead_time + adults.factor  + 
+                        international_booking + stay_length + previous_bookings_not_canceled +
+                        previously_cancelled + adr + reassigned + meal + deposit_type1 +
+                        if_wait + customer_type + distribution_channel + is_repeated_guest + 
+                        reservation_changes + used_agent + used_company  + 
+                        total_of_special_requests + arrival_date_season:hotel, 
+                      family = binomial(), data = train)
+summary(m.train)
+prediction <- predict(m.train, newdata = test, type = "response")
+hist(prediction)
+
+# ROCR 
+library(ROCR)
+pred <- prediction(prediction, test$is_canceled)
+acc <- performance(pred, "acc")
+plot(acc)
+# choose a cutoff: 0.35, 0.4, 0.45
+
+
+
+## Confusion Matrix
+ConfusionMatrixResults(hotels.df, reduced.model4, 0.35)
+ConfusionMatrixResults(hotels.df, reduced.model4, 0.4)
+ConfusionMatrixResults(hotels.df, reduced.model4, 0.45)
+```
+
+
+# Models with Weather Data
+```{r}
+# this is the dataset with pulled weather variables
+hotel_mod2 <- read.csv("hotel_mod2.csv")
+head(hotel_mod2)
+```
+
+
+## Additional Data Cleaning / Transformations
+Too stay consistent with the hotels.csv dataset, we will adjust some of these variables such as making a variable 0/1 rather than FALSE/TRUE and including transformations we added late in the analysis.
+(same as the data cleaning above for original dataset)
+```{r}
+
+########## adults ##########
+table(hotel_mod2$adults)
+# we will keep the observations with large groups of adults (company business trips)
+#### make numeric variable into a categorical
+hotel_mod2$adults.factor <- hotel_mod2$adults
+hotel_mod2$adults.factor[which(hotel_mod2$adults.factor >= 3)] <- "3+"
+hotel_mod2$adults.factor <- as.factor(hotel_mod2$adults.factor)
+table(hotel_mod2$adults.factor) 
+
+
+
+########## babies ##########
+table(hotel_mod2$babies)
+# remove the outlier, bringing 9 or 10 babies seems too extreme
+toomanybabies <- which(hotel_mod2$babies == 9 | hotel_mod2$babies == 10)
+hotel_mod2 <- hotel_mod2[-toomanybabies ,]
+# make categorical variable into a binary indicator 
+hotel_mod2$babies.factor <- as.factor(ifelse(hotel_mod2$babies == 0, 0, 1))
+table(hotel_mod2$babies.factor)
+
+
+
+########## children ##########
+table(hotel_mod2$children)
+# remove the outlier, bringing 10 children seems too extreme
+toomanychildren <- which(hotel_mod2$children ==10)
+hotel_mod2 <- hotel_mod2[-toomanychildren ,]
+# make categorical variable into a binary indicator 
+hotel_mod2$children.factor <- as.factor(ifelse(hotel_mod2$children == 0, 0, 1))
+table(hotel_mod2$children.factor)
+
+
+
+########## Family Combo ##########
+# create a categorical variable based on the status of the family dynamic
+hotel_mod2$family_combo[c(which(hotel_mod2$children==0 & hotel_mod2$babies==0))] <- "Adults"
+hotel_mod2$family_combo[c(which(hotel_mod2$children!=0 & hotel_mod2$babies==0))] <- "Adults, Children"
+hotel_mod2$family_combo[c(which(hotel_mod2$children==0 & hotel_mod2$babies!=0))] <- "Adults, Babies"
+hotel_mod2$family_combo[c(which(hotel_mod2$children!=0 & hotel_mod2$babies!=0))] <- "Adults, Children, and Babies"
+table(hotel_mod2$family_combo)
+
+
+
+
+########## Assigned and Reserved Room Type ##########
+table(hotel_mod2$assigned_room_type)
+table(hotel_mod2$reserved_room_type)
+# remove observations from L room type since there are very few observations for both 
+# note that the P room type was removed when removing the above outliers
+hotel_mod2 <- hotel_mod2[-c(which(hotel_mod2$reserved_room_type=="L")),]
+# combine these variables into binary indicator of reassignemnt of room type
+hotel_mod2$reassigned <- !(hotel_mod2$reserved_room_type == hotel_mod2$assigned_room_type)
+hotel_mod2$reassigned <- as.factor(ifelse(hotel_mod2$reassigned == FALSE, 0, 1))
+table(hotel_mod2$reassigned)
+
+
+
+
+########## Stay Length ##########
+hotel_mod2$stay_length <- hotel_mod2$Stay_length
+
+
+
+########## International Booking ##########
+# since both hotel_mod2 are in Portugal, we create a binary indicator of whether a booking is international or not
+hotel_mod2$international_booking <- hotel_mod2$country != "PRT"
+hotel_mod2$international_booking <- as.factor(ifelse(hotel_mod2$international_booking == FALSE, 0, 1))
+table(hotel_mod2$international_booking)
+
+
+
+
+########## Travel Agents ############
+table(hotel_mod2$used_agent)
+hotel_mod2$used_agent <- as.factor(ifelse(hotel_mod2$used_agent == "False", 0, 1))
+table(hotel_mod2$used_agent)
+
+
+
+######### Deposit ##########
+table(hotel_mod2$deposit_type)
+
+# merge non refund and refundable into Deposit
+hotel_mod2$deposit_type1 <- ifelse(hotel_mod2$deposit_type == "Non Refund","Deposit", ifelse(hotel_mod2$deposit_type == "Refundable", "Deposit", "No Deposit"))
+
+# create a binary indicator of whether a booking had at least a partial deposit or not
+hotel_mod2$deposit <- as.factor(ifelse(hotel_mod2$deposit_type1 == "Deposit", 1, 0))
+table(hotel_mod2$deposit)
+
+
+
+
+########## Market Segment ##########
+# remove undefined observations
+hotel_mod2 <- hotel_mod2[-c(which(hotel_mod2$market_segment == "Undefined")),]
+table(hotel_mod2$market_segment)
+
+
+
+
+########## Distribution Channel ##########
+# remove undefined observations
+hotel_mod2 <- hotel_mod2[-c(which(hotel_mod2$distribution_channel == "Undefined")),]
+table(hotel_mod2$distribution_channel)
+
+
+
+
+########## Parking Spaces ##########
+table(hotel_mod2$required_car_parking_spaces)
+# create a binary indicator of whether a booking requests parking or not
+hotel_mod2$parking_requests <- as.factor(ifelse(hotel_mod2$required_car_parking_spaces == 0, 0, 1))
+table(hotel_mod2$parking_requests)
+
+
+
+
+########## Special Requests ##########
+table(hotel_mod2$total_of_special_requests)
+# create a binary indicator of whether a booking requests accommodations or not
+hotel_mod2$special_requests <- as.factor(ifelse(hotel_mod2$total_of_special_requests == 0, 0, 1))
+table(hotel_mod2$special_requests)
+
+
+
+########## Booking Changes ############
+table(hotel_mod2$booking_changes)
+# create a binary indicator of whether a booking requests changes or not
+hotel_mod2$reservation_changes <- as.factor(ifelse(hotel_mod2$booking_changes == 0, 0, 1))
+table(hotel_mod2$reservation_changes)
+
+
+
+########## Previous Booking Cancellations ############
+table(hotel_mod2$previous_cancellations)
+# create a binary indicator to determine if previously canceled or not
+hotel_mod2$previously_cancelled <- as.factor(ifelse(hotel_mod2$previous_cancellations == 0, 0, 1))
+table(hotel_mod2$previously_cancelled)
+
+
+
+########## Meal ##########
+table(hotel_mod2$meal)
+# combine undefined and SC by definition
+hotel_mod2$meal[which(hotel_mod2$meal == "Undefined" | hotel_mod2$meal == "SC")] <- "No Meal"
+
+
+
+########## Days in Waiting List ##########
+hotel_mod2$if_wait <- as.factor(ifelse(hotel_mod2$days_in_waiting_list == 0, 0, 1))
+table(hotel_mod2$if_wait)
+```
+
+## Quick EDA of new weather predictors
+```{r}
+hist(hotel_mod2$temp)
+hist(hotel_mod2$maxt)
+hist(hotel_mod2$visibility)
+hist(hotel_mod2$wspd)
+hist(hotel_mod2$cloudcover)
+hist(hotel_mod2$mint)
+hist(hotel_mod2$precip) 
+hist(hotel_mod2$dew)
+hist(hotel_mod2$humidity)
+hist(hotel_mod2$precipcover) 
+table(hotel_mod2$conditions)
+
+# these are the ones we end up using in the final model
+hist(hotel_mod2$wdir, main = "", xlab = "Wind Direction")
+hist(hotel_mod2$mint, main = "", xlab = "Minimum Temperature")
+
+```
+
+
+## Model 4 - adding weather variables to Model 2
+```{r}
+# Start to add weather predictors to our model
+# Add wdir
+curr_model1 <- glm(is_canceled ~ arrival_date_season*hotel + lead_time + adults +  babies +  international_booking + Stay_length + previous_cancellations + adr + reassigned + meal + If_wait + customer_type + wdir, family = binomial(), data = hotel_mod2)
+summary(curr_model1)
+anova(curr_model, curr_model1, test = "Chisq")
+# Delete this one
+
+# Add temp
+curr_model2 <- glm(is_canceled ~ arrival_date_season*hotel + lead_time + adults +  babies +  international_booking + Stay_length + previous_cancellations + adr + reassigned + meal + If_wait + customer_type + temp, family = binomial(), data = hotel_mod2)
+summary(curr_model2)
+anova(curr_model, curr_model2, test = "Chisq")
+
+# Add maxt
+curr_model3 <- glm(is_canceled ~ arrival_date_season*hotel + lead_time + adults +  babies +  international_booking + Stay_length + previous_cancellations + adr + reassigned + meal + If_wait + customer_type + temp + maxt, family = binomial(), data = hotel_mod2)
+summary(curr_model3)
+anova(curr_model2, curr_model3, test = "Chisq")
+# Delete this one
+
+# Add visibility
+curr_model4 <- glm(is_canceled ~ arrival_date_season*hotel + lead_time + adults +  babies +  international_booking + Stay_length + previous_cancellations + adr + reassigned + meal + If_wait + customer_type + temp + visibility, family = binomial(), data = hotel_mod2)
+summary(curr_model4)
+anova(curr_model2, curr_model4, test = "Chisq")
+# Some data is missed, delete this for now
+
+# Add wspd
+curr_model5 <- glm(is_canceled ~ arrival_date_season*hotel + lead_time + adults +  babies +  international_booking + Stay_length + previous_cancellations + adr + reassigned + meal + If_wait + customer_type + temp + wspd, family = binomial(), data = hotel_mod2)
+summary(curr_model5)
+anova(curr_model2, curr_model5, test = "Chisq")
+# Delete this one
+
+# Add cloudcover
+curr_model6 <- glm(is_canceled ~ arrival_date_season*hotel + lead_time + adults +  babies +  international_booking + Stay_length + previous_cancellations + adr + reassigned + meal + If_wait + customer_type + temp + cloudcover, family = binomial(), data = hotel_mod2)
+summary(curr_model6)
+anova(curr_model2, curr_model6, test = "Chisq")
+# Delete this one
+
+# Add mint
+curr_model7 <- glm(is_canceled ~ arrival_date_season*hotel + lead_time + adults +  babies +  international_booking + Stay_length + previous_cancellations + adr + reassigned + meal + If_wait + customer_type + temp + mint, family = binomial(), data = hotel_mod2)
+summary(curr_model7)
+anova(curr_model2, curr_model7, test = "Chisq")
+
+# Add precip
+curr_model8 <- glm(is_canceled ~ arrival_date_season*hotel + lead_time + adults +  babies +  international_booking + Stay_length + previous_cancellations + adr + reassigned + meal + If_wait + customer_type + temp + mint + precip, family = binomial(), data = hotel_mod2)
+summary(curr_model8)
+anova(curr_model7, curr_model8, test = "Chisq")
+# Delete this one
+
+# Add dew
+curr_model9 <- glm(is_canceled ~ arrival_date_season*hotel + lead_time + adults +  babies +  international_booking + Stay_length + previous_cancellations + adr + reassigned + meal + If_wait + customer_type + temp + mint + dew, family = binomial(), data = hotel_mod2)
+summary(curr_model9)
+anova(curr_model7, curr_model9, test = "Chisq")
+# Delete this one
+
+# Add humidity
+curr_model10 <- glm(is_canceled ~ arrival_date_season*hotel + lead_time + adults +  babies +  international_booking + Stay_length + previous_cancellations + adr + reassigned + meal + If_wait + customer_type + temp + mint + humidity, family = binomial(), data = hotel_mod2)
+summary(curr_model10)
+anova(curr_model7, curr_model10, test = "Chisq")
+# Delete this one
+
+# Add precipcover
+curr_model11 <- glm(is_canceled ~ arrival_date_season*hotel + lead_time + adults +  babies +  international_booking + Stay_length + previous_cancellations + adr + reassigned + meal + If_wait + customer_type + temp + mint + precipcover, family = binomial(), data = hotel_mod2)
+summary(curr_model11)
+anova(curr_model7, curr_model11, test = "Chisq")
+# Delete this one
+
+# Add conditions
+curr_model12 <- glm(is_canceled ~ arrival_date_season*hotel + lead_time + adults +  babies +  international_booking + Stay_length + previous_cancellations + adr + reassigned + meal + If_wait + customer_type + temp + mint + conditions, family = binomial(), data = hotel_mod2)
+summary(curr_model12)
+anova(curr_model7, curr_model12, test = "Chisq")
+# Delete this one
+
+
+
+##### according to the above ANOVAs, let's use curr_model7 for now
+##### add in temperature and minimum temperature 
+
+use_model <- glm(is_canceled ~ arrival_date_season*hotel + lead_time + adults.factor +  babies.factor +  international_booking + Stay_length + previous_cancellations + adr + reassigned + meal + if_wait + customer_type + temp + mint, family = binomial(), data = hotel_mod2)
+summary(use_model)
+
+##  Bad Leverage Points
+cutoff <- 4/dim(hotel_mod2)[1]
+
+library(car)
+outlierTest(use_model)
+# outliers: 77172, 79871
+
+influencePlot(use_model)
+# high leverage (if > cutoff): 14032,89150
+# high standardized residuals (if > 2): 77172, 79871, 79875
+# therefore observations that are bad leverage points: all good
+
+
+## Check for Multicollinearity
+vif(use_model)
+
+#remove temp
+use_model1<- glm(is_canceled ~ arrival_date_season*hotel + lead_time + adults.factor +  babies.factor +  international_booking + Stay_length + previous_cancellations + adr + reassigned + meal + if_wait + customer_type  + mint, family = binomial(), data = hotel_mod2)
+vif(use_model1)
+
+#remove fixed hotel 
+use_model2<- glm(is_canceled ~ arrival_date_season:hotel + arrival_date_season + lead_time + adults.factor +  babies.factor +  international_booking + Stay_length + previous_cancellations + adr + reassigned + meal + if_wait + customer_type  + mint, family = binomial(), data = hotel_mod2)
+vif(use_model2) # still have some vif slightly greater than 5
+
+
+## ROC Curve 
+
+# split data into training and testing
+library(caTools)
+split<-sample.split(hotel_mod2,SplitRatio=0.7)
+train<-subset(hotel_mod2,split=T) 
+test<-subset(hotel_mod2,split=F)
+
+# use training set for above model
+m.train <- glm(is_canceled ~ arrival_date_season:hotel + arrival_date_season + lead_time + adults.factor +  babies.factor +  international_booking + Stay_length + previous_cancellations + adr + reassigned + meal + if_wait + customer_type  + mint, family = binomial(), data = train)
+summary(m.train)
+prediction <- predict(m.train, newdata = test, type = "response")
+hist(prediction)
+
+# ROCR 
+library(ROCR)
+pred <- prediction(prediction, test$is_canceled)
+acc <- performance(pred, "acc")
+plot(acc)
+# choose a cutoff: 0.5, 0.55, 0.6
+
+
+## Confusion Matrix
+ConfusionMatrixResults(hotel_mod2,use_model2,0.5)
+ConfusionMatrixResults(hotel_mod2,use_model2,0.55)
+ConfusionMatrixResults(hotel_mod2,use_model2,0.6)
+```
+
+## Model 5 - same process as Model 4 except remove interaction term instead of the fixed effect
+```{r}
+# remove the interaction effect instead
+use_model3<- glm(is_canceled ~ hotel + arrival_date_season + lead_time + adults.factor +  babies.factor +  international_booking + Stay_length + previous_cancellations + adr + reassigned + meal + if_wait + customer_type  + mint, family = binomial(), data = hotel_mod2)
+vif(use_model3)
+
+
+## ROC Curve 
+
+# use training set for above model
+m.train <- glm(is_canceled ~ hotel + arrival_date_season + lead_time + adults.factor +  babies.factor +  international_booking + Stay_length + previous_cancellations + adr + reassigned + meal + if_wait + customer_type  + mint, family = binomial(), data = train)
+summary(m.train)
+prediction <- predict(m.train, newdata = test, type = "response")
+hist(prediction)
+
+# ROCR 
+library(ROCR)
+pred <- prediction(prediction, test$is_canceled)
+acc <- performance(pred, "acc")
+plot(acc)
+# choose a cutoff: 0.5, 0.55, 0.6
+
+
+## Confusion Matrix
+ConfusionMatrixResults(hotel_mod2,use_model3,0.5)
+ConfusionMatrixResults(hotel_mod2,use_model3,0.55)
+ConfusionMatrixResults(hotel_mod2,use_model3,0.6)
+```
+
+## FINAL Model 6- adding weather variables to Model 3
+```{r}
+# add in all weather variables to the reduced model in model 3
+full.weather <- glm(is_canceled ~ arrival_date_season  + lead_time + adults.factor  + 
+                        international_booking + stay_length + previous_bookings_not_canceled +
+                        previously_cancelled + adr + reassigned + meal + deposit_type1 +
+                        if_wait + customer_type + distribution_channel + is_repeated_guest + 
+                        reservation_changes + used_agent   + 
+                        total_of_special_requests + arrival_date_season:hotel + 
+                        wdir + temp + maxt + visibility + wspd + cloudcover + mint +
+                        precip + dew + humidity + precipcover + conditions, 
+                      family = binomial(), data = hotel_mod2)
+summary(full.weather)
+
+# remove precip, dew, humidity, temp
+reduced1.weather <- glm(is_canceled ~ arrival_date_season  + lead_time + adults.factor  + 
+                        international_booking + stay_length + previous_bookings_not_canceled +
+                        adr + reassigned + meal + deposit_type1 +
+                        if_wait + customer_type + distribution_channel + is_repeated_guest + 
+                        reservation_changes + used_agent   + 
+                        total_of_special_requests + arrival_date_season:hotel + 
+                        wdir  + maxt + visibility + wspd + cloudcover + mint +
+                        precipcover + conditions, 
+                      family = binomial(), data = hotel_mod2)
+vif(reduced1.weather)
+
+# remove conditions
+reduced2.weather <- glm(is_canceled ~ arrival_date_season  + lead_time + adults.factor  + 
+                        international_booking + stay_length + previous_bookings_not_canceled +
+                        adr + reassigned + meal + deposit_type1 +
+                        if_wait + customer_type + distribution_channel + is_repeated_guest + 
+                        reservation_changes + used_agent   + 
+                        total_of_special_requests + arrival_date_season:hotel + 
+                        wdir  + maxt + visibility + wspd + cloudcover + mint + precipcover , 
+                      family = binomial(), data = hotel_mod2)
+vif(reduced2.weather)
+
+# remove maxt
+reduced3.weather <- glm(is_canceled ~ arrival_date_season  + lead_time + adults.factor  + 
+                        international_booking + stay_length + previous_bookings_not_canceled +
+                        adr + reassigned + meal + deposit_type1 +
+                        if_wait + customer_type + distribution_channel + is_repeated_guest + 
+                        reservation_changes + used_agent   + 
+                        total_of_special_requests + arrival_date_season:hotel + 
+                        wdir + visibility + wspd + cloudcover + mint + precipcover , 
+                      family = binomial(), data = hotel_mod2)
+vif(reduced3.weather)
+summary(reduced3.weather)
+
+# remove insignificant wspd, precipicover, visibility and cloudcover
+reduced4.weather <- glm(is_canceled ~ arrival_date_season  + lead_time + adults.factor  + 
+                        international_booking + stay_length + previous_bookings_not_canceled +
+                         adr + reassigned + meal + deposit_type1 +
+                        if_wait + customer_type + distribution_channel + is_repeated_guest + 
+                        reservation_changes + used_agent   + 
+                        total_of_special_requests + arrival_date_season:hotel + 
+                        wdir + mint , 
+                      family = binomial(), data = hotel_mod2)
+summary(reduced4.weather)
+vif(reduced4.weather)
+
+# remove interaction (WE DO NOT USE THIS AS THE FINAL MODEL, USED FOR COMPARISON)
+reduced5.weather <- glm(is_canceled ~ arrival_date_season  + lead_time + adults.factor  + 
+                        international_booking + stay_length + previous_bookings_not_canceled +
+                        adr + reassigned + meal + deposit_type1 +
+                        if_wait + customer_type + distribution_channel + is_repeated_guest + 
+                        reservation_changes + used_agent   + 
+                        total_of_special_requests + hotel + 
+                        wdir  + mint , 
+                      family = binomial(), data = hotel_mod2)
+vif(reduced5.weather) # all good
+
+
+##  Bad Leverage Points
+cutoff <- 4/dim(hotel_mod2)[1]
+
+library(car)
+outlierTest(reduced4.weather)
+# outliers: 76552
+
+influencePlot(reduced4.weather)
+# high leverage (if > cutoff): 76541, 79879, 79880
+# high standardized residuals (if > 2): 14019, 76541, 76552
+# therefore observations that are bad leverage points: 76541
+points <- c(76541)
+
+
+# remove bad leverage points
+hotel_mod2 <- hotel_mod2[-points,] # replace points with the bad leverage observations
+
+# re-run models without bad leverage
+reduced4.weather <- glm(is_canceled ~ arrival_date_season  + lead_time + adults.factor  + 
+                        international_booking + stay_length + previous_bookings_not_canceled +
+                        previously_cancelled + adr + reassigned + meal + deposit_type1 +
+                        if_wait + customer_type + distribution_channel + is_repeated_guest + 
+                        reservation_changes + used_agent   + 
+                        total_of_special_requests + arrival_date_season:hotel + 
+                        wdir  + mint , 
+                      family = binomial(), data = hotel_mod2)
+vif(reduced4.weather) #vif over 5 on the arrival season and interaction
+summary(reduced4.weather)
+
+## ROC Curve 
+
+# split data into training and testing
+library(caTools)
+split<-sample.split(hotel_mod2$is_canceled,SplitRatio=0.7)
+train<-subset(hotel_mod2,split=T) 
+test<-subset(hotel_mod2,split=F)
+
+# use training set for above model
+m.train4 <- glm(is_canceled ~ arrival_date_season  + lead_time + adults.factor  + 
+                        international_booking + stay_length + previous_bookings_not_canceled +
+                        previously_cancelled + adr + reassigned + meal + deposit_type1 +
+                        if_wait + customer_type + distribution_channel + is_repeated_guest + 
+                        reservation_changes + used_agent   + 
+                        total_of_special_requests + arrival_date_season:hotel + 
+                        wdir  + mint , 
+                      family = binomial(), data = hotel_mod2)
+summary(m.train4)
+prediction <- predict(m.train4, newdata = test, type = "response")
+hist(prediction)
+
+# ROCR 
+library(ROCR)
+pred <- prediction(prediction, test$is_canceled)
+acc <- performance(pred, "acc")
+plot(acc)
+# choose a cutoff: 0.45
+
+# confusion matrix
+actual <- hotel_mod2$is_canceled
+predicted <- rep(0,length(reduced4.weather$fitted.values))
+  for(i in 1: length(predicted)){
+    if(reduced4.weather$fitted.values[i] > 0.45){
+      predicted[i] <- 1
+    }
+  }
+table <- table(predicted, actual); addmargins(table)
+
+ConfusionMatrixResults(hotel_mod2,reduced4.weather,0.3)
+ConfusionMatrixResults(hotel_mod2,reduced4.weather,0.35)
+ConfusionMatrixResults(hotel_mod2,reduced4.weather,0.4)
+ConfusionMatrixResults(hotel_mod2,reduced4.weather,0.45) #chosen cutoff
+ConfusionMatrixResults(hotel_mod2,reduced4.weather,0.5)
+ConfusionMatrixResults(hotel_mod2,reduced4.weather,0.55)
+ConfusionMatrixResults(hotel_mod2,reduced4.weather,0.6)
+ConfusionMatrixResults(hotel_mod2,reduced4.weather,0.65)
+
+
+## Odds Ratio
+round(exp(cbind(Estimate=coef(reduced4.weather), confint(reduced4.weather))),2)
+
+library(sjPlot)
+plot_model(reduced4.weather) #visualize
+
+
+## Check the Plots
+
+residualPlots(reduced4.weather) #residual plots
+
+mmp(reduced4.weather) # marginal model plot
+
+# plot of effects (difficulty running all at once so broke into two parts)
+fixed <- glm(formula = is_canceled ~ arrival_date_season + lead_time + 
+    adults.factor + international_booking + stay_length + previous_bookings_not_canceled + 
+    previously_cancelled + adr + reassigned + meal + deposit_type1 + 
+    if_wait + customer_type + distribution_channel + is_repeated_guest + 
+    reservation_changes + used_agent + total_of_special_requests + 
+    wdir + mint, family = binomial(), 
+    data = hotel_mod2)
+interaction <- glm(formula = is_canceled ~ arrival_date_season:hotel , family = binomial(), 
+    data = hotel_mod2)
+
+library(effects)
+plot(allEffects(fixed, ask = FALSE))
+plot(allEffects(interaction, ask = FALSE))
+
+
+## Check the Model Fit
+
+## pseudo R2
+summ <- summary(reduced4.weather)
+null <- summ$null.deviance
+residual <- summ$deviance
+pseudoR2 <- 1 - residual/null; pseudoR2 #38%
+
+# pearson chi square test for goodness of fit
+pearson.chi.square <- round(sum(residuals(reduced4.weather, type="pearson")^2),3); pearson.chi.square
+
+quan95 <- qchisq(0.95, summ$df.residual); quan95 #use residual deviance df to determine 95% quantile
+
+quan95 < pearson.chi.square
+# if chi square value is larger than 95% reject the null hypothesis and conclude the logistic model does not fit
+```
+
+
+# An Idea for Future Studies
+Divide data into resort and city hotels to further explore results found in the interaction between season and hotel type (this will also solve the multicollinearity issue we face in our final model)
+```{r}
+#this is the current final model
+reduced4.weather <- glm(is_canceled ~ arrival_date_season  + lead_time + adults.factor  + 
+                        international_booking + stay_length + previous_bookings_not_canceled +
+                        previously_cancelled + adr + reassigned + meal + deposit_type1 +
+                        if_wait + customer_type + distribution_channel + is_repeated_guest + 
+                        reservation_changes + used_agent   + 
+                        total_of_special_requests + arrival_date_season:hotel + 
+                        wdir  + mint , 
+                      family = binomial(), data = hotel_mod2)
+
+# divide dataset
+resort <- hotel_mod2[hotel_mod2$hotel == "Resort Hotel",]
+city <- hotel_mod2[hotel_mod2$hotel == "City Hotel",]
+
+dim(hotel_mod2) #118970 
+dim(resort) #40038
+dim(city) #78932
+
+
+resort.model1 <- glm(is_canceled ~ arrival_date_season  + lead_time + adults.factor  + 
+                        international_booking + stay_length + previous_bookings_not_canceled +
+                        previously_cancelled + adr + reassigned + meal + deposit_type1 +
+                        if_wait + customer_type + distribution_channel + is_repeated_guest + 
+                        reservation_changes + used_agent   + 
+                        total_of_special_requests  + wdir  + mint , 
+                      family = binomial(), data = resort)
+summary(resort.model1)
+vif(resort.model1)
+
+
+city.model1 <- glm(is_canceled ~ arrival_date_season  + lead_time + adults.factor  + 
+                        international_booking + stay_length + previous_bookings_not_canceled +
+                        previously_cancelled + adr + reassigned + meal + deposit_type1 +
+                        if_wait + customer_type + distribution_channel + is_repeated_guest + 
+                        reservation_changes + used_agent   + 
+                        total_of_special_requests  + wdir  + mint , 
+                      family = binomial(), data = city)
+summary(city.model1) #wdir not significant
+vif(city.model1)
+
+### with more time we would further explore the difference of effects on the different hotel types
+```
